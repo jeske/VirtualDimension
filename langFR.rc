@@ -307,7 +307,7 @@ BEGIN
                     IDC_AUTOSWITCHDESKTOP_CHECK,"Button",BS_AUTOCHECKBOX |
                     BS_MULTILINE | WS_TABSTOP,111,53,92,18
     GROUPBOX        "Options",IDC_STATIC,7,7,200,100
-    LTEXT           "Sensibilit?bords:",IDC_STATIC,105,91,61,9
+    LTEXT           "Sensibilité bords:",IDC_STATIC,105,91,61,9
     EDITTEXT        IDC_SNAPSIZE_EDIT,167,89,35,13,ES_AUTOHSCROLL |
                     ES_NUMBER
     CONTROL         "",IDC_SNAPSIZE_SPIN,"msctls_updown32",UDS_SETBUDDYINT |
@@ -320,7 +320,7 @@ BEGIN
                     UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY |
                     UDS_ARROWKEYS | UDS_NOTHOUSANDS,207,77,6,6,
                     WS_EX_TRANSPARENT
-    CONTROL         "Naviguer ?la souris",IDC_MOUSEWARP_CHECK,"Button",
+    CONTROL         "Naviguer à la souris",IDC_MOUSEWARP_CHECK,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,16,71,80,10
     CONTROL          "plus...",IDC_MOUSEWARPCFG_BTN,"HyperLinkControl",
                     WS_GROUP | WS_TABSTOP,26,79,30,10, WS_EX_TRANSPARENT
@@ -329,7 +329,7 @@ END
 IDD_TROUBLESHOOTING_SETTINGS DIALOGEX DISCARDABLE 0, 0, 214, 114
 STYLE DS_SETFONT | DS_MODALFRAME | DS_3DLOOK | DS_FIXEDSYS | DS_CONTROL |
     DS_CENTER | WS_CHILD | WS_CAPTION | WS_SYSMENU
-CAPTION "Avanc"
+CAPTION "Avancé"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     CONTROL         "Activer",IDC_INTEGRATEWTHSHELL_CHECK,"Button",
@@ -402,13 +402,13 @@ END
 STRINGTABLE DISCARDABLE
 BEGIN
     IDS_PROGRAM             "Programme"
-    IDS_PROGRAMINLIST_ERROR "Le programme sélectionn?est déj?dans la liste."
+    IDS_PROGRAMINLIST_ERROR "Le programme sélectionné est déjà dans la liste."
     IDS_ERROR               "Erreur"
     IDS_ADDPROGRAM          "Ajouter un programme ..."
     IDS_PROGRAMFILTER       "Programmes|*.EXE|All|*.*|"
     IDS_PICTUREFILTER       "Images|*.BMP;*.JPEG;*.JPG;*.GIF;*.PCX|Tous|*.*|"
     IDS_SELECT_BACKGROUND   "Sélectionner l'image de fond"
-    IDS_DISABLED            "désactiv"
+    IDS_DISABLED            "désactivé"
     IDS_PARAM_COLOR         "Couleur"
     IDS_PARAM_IMAGE         "Image"
     IDS_PARAM_NONE          "Pas d'option"

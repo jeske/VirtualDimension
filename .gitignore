@@ -1,0 +1,15 @@
+ipch
+Debug
+Release
+HookDLL/Debug
+HookDLL/Release
+langEN/Debug
+langEN/Release
+langFR/Debug
+langFR/Release
+*.sdf
+*.opensdf
+*.suo
+*.manifest
+*.filters
+*.user

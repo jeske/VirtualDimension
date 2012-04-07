@@ -130,9 +130,12 @@ END
 // RT_MANIFEST
 //
 
-#ifndef _VC80_UPGRADE
-1/*CREATEPROCESS_MANIFEST_RESOURCE_ID*/ 24/*RT_MANIFEST*/ "VirtualDimension.exe.manifest"
-#endif
+// TODO: move to separate rc file for configurations that require explicit manifest declaration
+
+//#ifndef _VC80_UPGRADE
+//#if !defined _MSC_VER || _MSC_VER < 1400
+//1/*CREATEPROCESS_MANIFEST_RESOURCE_ID*/ 24/*RT_MANIFEST*/ "VirtualDimension.exe.manifest"
+//#endif
 
 /////////////////////////////////////////////////////////////////////////////
 //
