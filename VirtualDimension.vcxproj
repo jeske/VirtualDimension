@@ -81,6 +81,7 @@
     <ClCompile Include="BackgroundColor.cpp" />
     <ClCompile Include="BackgroundDisplayMode.cpp" />
     <ClCompile Include="BalloonNotif.cpp" />
+    <ClCompile Include="Capture.cpp" />
     <ClCompile Include="CmdLine.cpp" />
     <ClCompile Include="CmdLineOptions.cpp" />
     <ClCompile Include="Config.cpp" />
@@ -90,6 +91,8 @@
     <ClCompile Include="DesktopManager.cpp" />
     <ClCompile Include="ExplorerWrapper.cpp" />
     <ClCompile Include="FastWindow.cpp" />
+    <ClCompile Include="FullScreenView.cpp" />
+    <ClCompile Include="FullScreenViewThumbnail.cpp" />
     <ClCompile Include="guids.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
@@ -104,6 +107,7 @@
     <ClCompile Include="movewindow.cpp" />
     <ClCompile Include="OnScreenDisplay.cpp" />
     <ClCompile Include="PlatformHelper.cpp" />
+    <ClCompile Include="Scaling.cpp" />
     <ClCompile Include="Settings.cpp" />
     <ClCompile Include="SharedMenuBuffer.cpp" />
     <ClCompile Include="ShellHook.cpp" />
@@ -113,6 +117,7 @@
     </ClCompile>
     <ClCompile Include="SubclassWindow.cpp" />
     <ClCompile Include="TaskPool.cpp" />
+    <ClCompile Include="Thumbnail.cpp" />
     <ClCompile Include="ToolTip.cpp" />
     <ClCompile Include="Transparency.cpp" />
     <ClCompile Include="TrayIcon.cpp" />
@@ -130,12 +135,15 @@
     <ClInclude Include="BackgroundColor.h" />
     <ClInclude Include="BackgroundDisplayMode.h" />
     <ClInclude Include="BalloonNotif.h" />
+    <ClInclude Include="Capture.h" />
     <ClInclude Include="CmdLine.h" />
     <ClInclude Include="Config.h" />
     <ClInclude Include="Desktop.h" />
     <ClInclude Include="DesktopManager.h" />
     <ClInclude Include="ExplorerWrapper.h" />
     <ClInclude Include="FastWindow.h" />
+    <ClInclude Include="FullScreenView.h" />
+    <ClInclude Include="FullScreenViewThumbnail.h" />
     <ClInclude Include="HidingMethod.h" />
     <ClInclude Include="HookDLL.h" />
     <ClInclude Include="HotkeyConfig.h" />
@@ -148,12 +156,14 @@
     <ClInclude Include="OnScreenDisplay.h" />
     <ClInclude Include="PlatformHelper.h" />
     <ClInclude Include="Resource.h" />
+    <ClInclude Include="Scaling.h" />
     <ClInclude Include="Settings.h" />
     <ClInclude Include="SharedMenuBuffer.h" />
     <ClInclude Include="ShellHook.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="StdString.h" />
     <ClInclude Include="TaskPool.h" />
+    <ClInclude Include="Thumbnail.h" />
     <ClInclude Include="ToolTip.h" />
     <ClInclude Include="Transparency.h" />
     <ClInclude Include="TrayIcon.h" />

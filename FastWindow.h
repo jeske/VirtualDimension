@@ -29,7 +29,7 @@ class FastWindow
 {
 public:
    FastWindow();
-   ~FastWindow(void);
+   virtual ~FastWindow();
 
    bool IsValid() const { return ::IsWindow(m_hWnd) ? true : false; }
 

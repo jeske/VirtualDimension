@@ -81,6 +81,8 @@ public:
 
    bool Configure(HWND hDlg);
 
+   const void* GetPicture() const;
+
    static BOOL CALLBACK ActivateTopWindowProc( HWND hWnd, LPARAM lParam );
 protected:
    void OnHotkey();

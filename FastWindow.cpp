@@ -26,7 +26,7 @@ FastWindow::FastWindow()
    m_freeTimerId = 0;
 }
 
-FastWindow::~FastWindow(void)
+FastWindow::~FastWindow()
 {
    if (IsWindow(m_hWnd)) 
       DestroyWindow(m_hWnd);
