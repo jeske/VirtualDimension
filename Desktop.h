@@ -105,6 +105,8 @@ protected:
 
    TaskPool m_taskPool;
 
+   mutable void* m_picture;
+
    class DesktopProperties
    {
    public:

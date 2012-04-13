@@ -21,7 +21,7 @@ FullScreenViewThumbnail::FullScreenViewThumbnail()
 		s_initialized = true;
 	}
 
-	Scaling::GetDefaultBitmapInfo(m_bi);
+	Scaling::GetDefaultBitmapInfo(m_bi, 0, 0);
 
 	SetMessageHandler(WM_MOUSEHOVER, this, &FullScreenViewThumbnail::OnMouseHover);
 	SetMessageHandler(WM_MOUSELEAVE, this, &FullScreenViewThumbnail::OnMouseLeave);
@@ -69,6 +69,7 @@ bool FullScreenViewThumbnail::Create(HWND parent, int border, int x, int y, int 
 
 	m_bi.bmiHeader.biWidth = w;
     m_bi.bmiHeader.biHeight = h;
+	m_bi.bmiHeader.biSizeImage = w*h*3;
 
 	HWND hwnd = FastWindow::Create(s_className, "", WS_CHILD | WS_VISIBLE, 
 		x, y, w + 2*border, h + 2*border, parent, 0, GetModuleHandle(0));
@@ -98,6 +99,7 @@ LRESULT FullScreenViewThumbnail::OnMouseHover(HWND hWnd, UINT message, WPARAM wP
 	tme.dwFlags = TME_LEAVE;
 	TrackMouseEvent(&tme);
 	UpdateWindow(*this);
+	return 0;
 }
 
 LRESULT FullScreenViewThumbnail::OnMouseLeave(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -113,6 +115,7 @@ LRESULT FullScreenViewThumbnail::OnMouseLeave(HWND hWnd, UINT message, WPARAM wP
 	TrackMouseEvent(&tme);
 	m_hover = true;
 	UpdateWindow(*this);
+	return 0;
 }
 
 LRESULT FullScreenViewThumbnail::OnPaint(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -143,4 +146,5 @@ LRESULT FullScreenViewThumbnail::OnPaint(HWND hWnd, UINT message, WPARAM wParam,
 LRESULT FullScreenViewThumbnail::OnLeftButtonDown(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	PostMessage(GetParent(hWnd), MSG_FSV_THUMBNAIL, m_index, 0);
+	return 0;
 }

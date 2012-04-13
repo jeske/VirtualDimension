@@ -29,8 +29,10 @@
 #include "VirtualDimension.h"
 #include "PlatformHelper.h"
 #include "Locale.h"
+#include "Capture.h"
 
 Desktop::Desktop(int i)
+	: m_picture(0)
 {
 	char * basename;
 
@@ -48,6 +50,7 @@ Desktop::Desktop(int i)
 }
 
 Desktop::Desktop(Settings::Desktop * desktop)
+	: m_picture(0)
 {
    desktop->GetName(m_name, sizeof(m_name));
    desktop->LoadSetting(Settings::Desktop::DeskWallpaper, m_wallpaperFile, sizeof(m_wallpaperFile));
@@ -83,6 +86,9 @@ Desktop::~Desktop(void)
 
    //Remove the tooltip tool
    tooltip->UnsetTool(this);
+
+   if (m_picture)
+	   delete [] m_picture;
 }
 
 HMENU Desktop::BuildMenu()
@@ -478,3 +484,17 @@ bool Desktop::deskOrder(Desktop * first, Desktop * second)
 {
    return first->m_index < second->m_index;
 }
+
+const void* Desktop::GetPicture() const
+{
+	// TODO: save picture in m_picture
+
+	if (!m_picture) {
+		// stub so far.
+		RECT rc;
+		m_picture = Capture::CaptureWindow(0, rc);
+	}
+
+	return m_picture;
+}
+

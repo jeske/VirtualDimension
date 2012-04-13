@@ -1,8 +1,12 @@
 #include "stdafx.h"
+#include <map>
 #include <memory.h>
 #include <math.h>
 #include "Scaling.h"
 
+using namespace std;
+
+static const int BPP = 3;
 
 void Scaling::GetDefaultBitmapInfo(BITMAPINFO& bi, int w, int h)
 {
@@ -11,7 +15,7 @@ void Scaling::GetDefaultBitmapInfo(BITMAPINFO& bi, int w, int h)
         0, // LONG       biWidth;
         0, // LONG       biHeight;
         1, // WORD       biPlanes;
-        24, // WORD       biBitCount;
+        BPP * 8, // WORD       biBitCount;
         BI_RGB, // DWORD      biCompression;
         0, // DWORD      biSizeImage;
         0, // LONG       biXPelsPerMeter;
@@ -22,7 +26,7 @@ void Scaling::GetDefaultBitmapInfo(BITMAPINFO& bi, int w, int h)
 	memmove(&bi, &bih, sizeof(bih));
 	bi.bmiHeader.biWidth = w;
 	bi.bmiHeader.biHeight = h;
-	bi.bmiHeader.biSizeImage = w*h*3;
+	bi.bmiHeader.biSizeImage = w*h*BPP;
 }
 
 int Scaling::BestFit(int w, int h, int maxW, int maxH)
@@ -36,71 +40,155 @@ int Scaling::BestFit(int w, int h, int maxW, int maxH)
 	return maxW;
 }
 
-
 namespace
 {
-	void ScaleHorizontally(const void* buf, int w, int h, void* outBuf, int outW)
+	struct Weights
 	{
-		float factor = float(w) / outW;
+		Weights(int _depth, int* _shifts, int* _weights)
+			: depth(_depth)
+			, shifts(_shifts)
+			, weights(_weights)
+		{}
+
+		~Weights() {
+			delete [] shifts;
+			delete [] weights;
+		}
 		
-		int depth = int(ceil(factor)) + 1;
-		int** dist;
-		int* weights = new int[outW * depth];
+		void Put(char* outPix, const char* inLine, int n, int stride) const {
+			int* w = weights + n * depth;
+			int shift = shifts[n];
+			for (int i=0; i<depth; ++i) {
+				int x = w[i];
+				if (x <=0)
+					continue;
+				*outPix += (*(inLine + (shift + i)*stride)) * x;
+				*(outPix + 1) += (*(inLine + (shift + i)*stride) + 1) * x;
+				*(outPix + 2) += (*(inLine + (shift + i)*stride) + 2) * x;
+			}
+		}
+	
+		int depth;
+		int* shifts;
+		int* weights; //[outW][depth]
+	};
 
-		//float* centers = new float[outW];
-
-
-		for (int i=0; i<outW; ++i) {
-			float center = factor * (0.5f + float(i));
+	class WeightsCache
+	{
+	public:
+		WeightsCache() {
+			InitializeCriticalSection(&m_cs);
 		}
 
-		//delete [] centers;
-		delete [] weights;
+		~WeightsCache() {
+			DeleteCriticalSection(&m_cs);			
+			for (TCache::iterator it = m_cache.begin(), end = m_cache.end();
+				it != end; ++it) {
+					delete it->second;
+			}
+		}
 
+		const Weights* GetWeights(int inW, int outW) {
+			Weights* pw = 0;
+			pair<int, int> key = make_pair(inW, outW);
+			EnterCriticalSection(&m_cs);
+			TCache::iterator it = m_cache.find(key);
+			if (it == m_cache.end()) {
+				pw = CalculateWeights(inW, outW);
+				m_cache.insert(make_pair(key, pw));
+			}
+			else {
+				pw = it->second;
+			}
+			LeaveCriticalSection(&m_cs);
+			return pw;
+		}
 
-		dist = new int*[5];
-		dist[0] = new int[outW];
-		dist[1] = new int[outW];
-		dist[2] = new int[outW];
-		dist[3] = new int[outW];
-		dist[4] = new int[outW];
-	//	m_distW[2] = new int[m_outW];
+	private:
+		static float WFunc(float center, int x, int radius) {
+			float pixcenter = float(x) + 0.5f;
+			return (float)exp(-1.44 * radius * (fabs(pixcenter - center)));
+		}
 
-		float stretchW = (float)w/outW;
-		for (int i=0; i<outW; ++i)
+		static int WtoI(float weight)
 		{
-			float center = stretchW*(0.5f + (float)i) - 0.5f;
-			float base = floor(center);
-			dist[0][i] = (int)(base + 0.5f);
-			float baseDist = center - base;
+			if (weight < 0.005f)
+				return 0;
+			return (int)(weight * 255.0f + 0.5f);
+		}
 
-			float weights[4];
-			//int n=0;
-			float sum = 0.0f;
-			for (int j=0; j<4; ++j)
-			{
-				if (i==0 && j==0 || i==outW-1 && j==3)
-					weights[j] = -1;
-				else
-				{
-					weights[j] = WeightFunc(baseDist - j + 1);
-					sum += weights[j];
-				//	++n;
+		static Weights* CalculateWeights(int inW, int outW) {
+			float factor = float(inW) / outW;
+			int depth = int(ceil(factor)) + 1;
+			int radius = depth / 2;
+			int* shifts = new int[outW];
+			int* weights = new int[outW * depth];
+			float* wf = new float[depth];
+			
+			for (int i=0; i<outW; ++i) {
+				float center = factor * (0.5f + float(i));
+				int shift = (int)floor(center) - radius;
+				shifts[i] = shift;
+
+				int* w = weights + i*depth;
+				float sum = 0.0f;
+				for (int j=0; j<depth; ++j) {
+					int x = j + shift;
+					if (x < 0 || x >= inW) {
+						wf[j] = 0.0;
+					}
+					else {
+						wf[j] = WFunc(center, x, radius);
+						sum += wf[j];
+					}
+				}
+				for (int j=0; j<depth; ++j) {
+					w[j] = WtoI(wf[j]/sum);
 				}
 			}
 
-			for (int j=1; j<5; ++j)
-			{
-				dist[j][i] = IntWeight(weights[j-1]/sum);
+			delete [] wf;
+
+			return new Weights(depth, shifts, weights);			
+		}
+
+		typedef map<pair<int, int>, Weights*> TCache;
+		TCache m_cache;
+		CRITICAL_SECTION m_cs;
+	};
+
+
+	static WeightsCache s_wcache;
+
+	void ScaleHorizontally(const char* buf, int w, int h, char* outBuf, int outW)
+	{
+		const Weights* weights = s_wcache.GetWeights(w, outW);
+		for (int i=0; i<h; ++i) {
+			int offset = i*outW*BPP;
+			const char* inLine = buf + i*w*BPP;
+			for (int j=0; j<outW; ++j) {
+				weights->Put(outBuf + offset + j*BPP, inLine, j, BPP);
 			}
 		}
 	}
 
-	void ScaleVertically(const void* buf, int w, int h, void* outBuf, int outH)
+	void ScaleVertically(const char* buf, int w, int h, char* outBuf, int outH)
 	{
+		const Weights* weights = s_wcache.GetWeights(h, outH);
+		int stride = w*BPP;
+		for (int i=0; i<outH; ++i) {
+			for (int j=0; j<w; ++j) {
+				const char* inLine = buf + j*BPP;
+				char* outPix = outBuf + (i*w + j)*BPP;
+				weights->Put(outPix, inLine, i, stride);
+			}
+		}
 	}
 }
 
 void Scaling::Scale(const void* buf, int w, int h, void* outBuf, int outW, int outH)
 {
+	char* tempBuf = new char[outW * h * BPP];
+	ScaleHorizontally((const char*)buf, w, h, tempBuf, outW);
+	ScaleVertically(tempBuf, outW, h, (char*)outBuf, outH);
 }
