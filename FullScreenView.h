@@ -23,10 +23,10 @@ private:
 	LRESULT OnThumbnailClicked(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 	LRESULT OnPaint(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 	LRESULT OnSize(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
-	LRESULT OnShowWindow(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
-	
+		
 	std::vector<FullScreenViewThumbnail*> m_thumbnails;
 	DesktopManager* m_dm;
+	HWND m_parent;
 
 	static bool s_initialized;
 	static void RegisterClass();

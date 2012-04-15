@@ -15,14 +15,13 @@ bool FullScreenView::s_initialized = false;
 
 FullScreenView::FullScreenView(DesktopManager* dm)
 	: m_dm(dm)
+	, m_parent(0)
 {
 	if (!s_initialized) {
 		RegisterClass();
 		s_initialized = true;
 	}
 	SetMessageHandler(WM_PAINT, this, &FullScreenView::OnPaint);
-	
-	//SetMessageHandler(WM_ACTIVATEAPP, this, &FullScreenView::OnShowWindow);
 	SetMessageHandler(WM_LBUTTONDOWN, this, &FullScreenView::OnLeftButtonDown);
 	SetMessageHandler(MSG_FSV_THUMBNAIL, this, &FullScreenView::OnThumbnailClicked);
 }
@@ -55,6 +54,7 @@ void FullScreenView::RegisterClass()
 
 bool FullScreenView::Create(HWND parent)
 {
+	m_parent = parent;
 	RECT workarea;
 	SystemParametersInfo(SPI_GETWORKAREA, 0, &workarea, 0);
 	
@@ -69,7 +69,7 @@ bool FullScreenView::Create(HWND parent)
 	HWND hwnd = FastWindow::Create(
 		WS_EX_TOPMOST, s_className, title, WS_POPUP | WS_MAXIMIZE, 
 		workarea.left, workarea.top, W, H, 
-		parent, 0, hinst
+		0, 0, hinst
 	);
 	if (!hwnd)
 		return false;
@@ -100,13 +100,16 @@ bool FullScreenView::CreateThumbnails()
 	int w, h;
 	CalculateThumbnailsLayout(W, H, n, coords, w, h);
 		
-	for (int i=0; i<n; ++i) {
+
+	Desktop* d = m_dm->GetFirstDesktop();
+	for (int i=0; i<n, d; ++i) {
 		FullScreenViewThumbnail* th = new FullScreenViewThumbnail;
 		m_thumbnails.push_back(th);
-		if (!th->Create(m_hWnd, s_border, coords[i].x, coords[i].y, w, h, i, m_dm->GetDesktop(i)->GetPicture())) {
+		if (!th->Create(m_hWnd, s_border, coords[i].x, coords[i].y, w, h, d)) {
 			DestroyThumbnails();
 			return false;
 		}
+		d = m_dm->GetNextDesktop();
 	}
 	return true;
 }
@@ -176,9 +179,9 @@ LRESULT FullScreenView::OnLeftButtonDown(HWND hWnd, UINT message, WPARAM wParam,
 
 LRESULT FullScreenView::OnThumbnailClicked(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	int index = (int)wParam;
+	Desktop* d = (Desktop*)lParam;
 	ShowWindow(m_hWnd, SW_MINIMIZE);
-	m_dm->SwitchToDesktop(m_dm->GetDesktop(index));
+	m_dm->SwitchToDesktop(d);
 	return 0;
 }
 
@@ -195,7 +198,7 @@ LRESULT FullScreenView::OnPaint(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 	GetClientRect(hWnd, &rect);
 	hdc = BeginPaint(hWnd, &ps);
 
-	HBRUSH br = CreateSolidBrush(0x00202040);
+	HBRUSH br = CreateSolidBrush(0x00402020);
 	FillRect(hdc, &rect, br);
 	
 	EndPaint(hWnd, &ps);
@@ -205,17 +208,13 @@ LRESULT FullScreenView::OnPaint(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 LRESULT FullScreenView::OnSize(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	if (wParam == SIZE_MINIMIZED) {
-		return DefWindowProc(hWnd, message, wParam, lParam);
+		ShowWindow(m_parent, SW_SHOW);
 	}
 	if (wParam == SIZE_MAXIMIZED) {
 		CreateThumbnails();
-		return DefWindowProc(hWnd, message, wParam, lParam);
+		ShowWindow(m_parent, SW_HIDE);
 	}
 	return DefWindowProc(hWnd, message, wParam, lParam);
 }
 
-LRESULT FullScreenView::OnShowWindow(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
-{
-	
-	return DefWindowProc(hWnd, message, wParam, lParam);
-}
+

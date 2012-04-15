@@ -271,7 +271,7 @@ bool VirtualDimension::Start(HINSTANCE hInstance, int nCmdShow)
    }
 
    fullScreenView = new FullScreenView(deskMan);
-   return fullScreenView->Create(0);
+   return fullScreenView->Create(hWnd);
 }
 
 VirtualDimension::~VirtualDimension()

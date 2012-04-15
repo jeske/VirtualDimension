@@ -1,15 +1,16 @@
 #include "stdafx.h"
 #include "FullScreenViewThumbnail.h"
 #include "Scaling.h"
+#include "Desktop.h"
 
 static LPCTSTR s_className = "VirtualDimensionFSVTH";
-static const DWORD s_inactiveBC = 0x00303060;
-static const DWORD s_activeBC = 0x006060C0;
+static const DWORD s_inactiveBC = 0x00603030;
+static const DWORD s_activeBC = 0x00C06060;
 
 bool FullScreenViewThumbnail::s_initialized = false;
 
 FullScreenViewThumbnail::FullScreenViewThumbnail()
-	: m_index(0)
+	: m_desktop(0)
 	, m_border(0)
 	, m_picW(0)
 	, m_picH(0)
@@ -23,7 +24,7 @@ FullScreenViewThumbnail::FullScreenViewThumbnail()
 
 	Scaling::GetDefaultBitmapInfo(m_bi, 0, 0);
 
-	SetMessageHandler(WM_MOUSEHOVER, this, &FullScreenViewThumbnail::OnMouseHover);
+	SetMessageHandler(WM_MOUSEMOVE, this, &FullScreenViewThumbnail::OnMouseMove);
 	SetMessageHandler(WM_MOUSELEAVE, this, &FullScreenViewThumbnail::OnMouseLeave);
 	SetMessageHandler(WM_PAINT, this, &FullScreenViewThumbnail::OnPaint);
 	SetMessageHandler(WM_LBUTTONDOWN, this, &FullScreenViewThumbnail::OnLeftButtonDown);
@@ -55,9 +56,11 @@ void FullScreenViewThumbnail::RegisterClass()
 	FastWindow::RegisterClassEx(&wcex);
 }
 
-bool FullScreenViewThumbnail::Create(HWND parent, int border, int x, int y, int w, int h, int index, const void* picture)
+bool FullScreenViewThumbnail::Create(HWND parent, int border, int x, int y, int w, int h, Desktop* desk)
 {
-	m_index = index;
+	if (!desk)
+		return false;
+	m_desktop = desk;
 	m_border = border;
 	m_picW = w;
 	m_picH = h;
@@ -66,7 +69,7 @@ bool FullScreenViewThumbnail::Create(HWND parent, int border, int x, int y, int 
 	memset(m_picture, 0, w*h*3);
 	int W = GetSystemMetrics(SM_CXSCREEN);
 	int H = GetSystemMetrics(SM_CYSCREEN);
-	Scaling::Scale(picture, W, H, m_picture, w, h);
+	Scaling::Scale(m_desktop->GetPicture(), W, H, m_picture, w, h);
 
 	m_bi.bmiHeader.biWidth = w;
     m_bi.bmiHeader.biHeight = h;
@@ -78,45 +81,42 @@ bool FullScreenViewThumbnail::Create(HWND parent, int border, int x, int y, int 
 	if (!hwnd)
 		return false;
 
-	TRACKMOUSEEVENT tme;
-	tme.cbSize = sizeof(tme);
-	tme.dwFlags = TME_HOVER;
-	tme.hwndTrack = hwnd;
-	tme.dwHoverTime = HOVER_DEFAULT;
-	TrackMouseEvent(&tme);
+	//TRACKMOUSEEVENT tme;
+	//tme.cbSize = sizeof(tme);
+	//tme.dwFlags = TME_HOVER;
+	//tme.hwndTrack = hwnd;
+	//tme.dwHoverTime = HOVER_DEFAULT;
+	//TrackMouseEvent(&tme);
 
 	return true;
 }
 
-LRESULT FullScreenViewThumbnail::OnMouseHover(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT FullScreenViewThumbnail::OnMouseMove(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	m_hover = true;
-	TRACKMOUSEEVENT tme;
-	tme.cbSize = sizeof(tme);
-	tme.dwFlags = TME_CANCEL | TME_HOVER;
-	tme.hwndTrack = hWnd;
-	tme.dwHoverTime = HOVER_DEFAULT;
-	TrackMouseEvent(&tme);
-	tme.dwFlags = TME_LEAVE;
-	TrackMouseEvent(&tme);
-	UpdateWindow(*this);
-	return 0;
+	if (!m_hover) {
+		m_hover = true;
+		TRACKMOUSEEVENT tme;
+		tme.cbSize = sizeof(tme);
+		tme.hwndTrack = hWnd;
+		tme.dwHoverTime = HOVER_DEFAULT;
+		tme.dwFlags = TME_LEAVE;
+		TrackMouseEvent(&tme);
+		RECT rc;
+		GetClientRect(hWnd, &rc);
+		InvalidateRect(hWnd, &rc, FALSE);
+		//UpdateWindow(*this);
+	}
+	return DefWindowProc(hWnd, message, wParam, lParam);
 }
 
 LRESULT FullScreenViewThumbnail::OnMouseLeave(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	m_hover = false;
-	TRACKMOUSEEVENT tme;
-	tme.cbSize = sizeof(tme);
-	tme.dwFlags = TME_CANCEL | TME_LEAVE;
-	tme.hwndTrack = hWnd;
-	tme.dwHoverTime = HOVER_DEFAULT;
-	TrackMouseEvent(&tme);
-	tme.dwFlags = TME_HOVER;
-	TrackMouseEvent(&tme);
-	m_hover = true;
-	UpdateWindow(*this);
-	return 0;
+	RECT rc;
+	GetClientRect(hWnd, &rc);
+	InvalidateRect(hWnd, &rc, FALSE);
+	//UpdateWindow(*this);
+	return DefWindowProc(hWnd, message, wParam, lParam);
 }
 
 LRESULT FullScreenViewThumbnail::OnPaint(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -138,7 +138,6 @@ LRESULT FullScreenViewThumbnail::OnPaint(HWND hWnd, UINT message, WPARAM wParam,
 	StretchDIBits(
 		hdc,
 		rect.left + m_border, rect.top + m_border, 
-		//rect.right - rect.left - 2*m_border, rect.top - rect.bottom - 2*m_border,
 		m_picW, m_picH,
 		0, 0, m_picW, m_picH, m_picture, &m_bi, DIB_RGB_COLORS, SRCCOPY
 	);
@@ -151,6 +150,6 @@ LRESULT FullScreenViewThumbnail::OnPaint(HWND hWnd, UINT message, WPARAM wParam,
 
 LRESULT FullScreenViewThumbnail::OnLeftButtonDown(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	PostMessage(GetParent(hWnd), MSG_FSV_THUMBNAIL, m_index, 0);
+	PostMessage(GetParent(hWnd), MSG_FSV_THUMBNAIL, 0, (LPARAM)m_desktop);
 	return 0;
 }
