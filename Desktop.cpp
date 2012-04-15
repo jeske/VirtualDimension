@@ -427,6 +427,7 @@ void Desktop::Activate(void)
 void Desktop::Desactivate(void)
 {
    m_active = false;
+   RefreshPicture();
 }
 
 void Desktop::SetHotkey(int hotkey)
@@ -485,16 +486,21 @@ bool Desktop::deskOrder(Desktop * first, Desktop * second)
    return first->m_index < second->m_index;
 }
 
-const void* Desktop::GetPicture() const
+const void* Desktop::GetPicture()
 {
-	// TODO: save picture in m_picture
-
 	if (!m_picture) {
-		// stub so far.
-		RECT rc;
-		m_picture = Capture::CaptureWindow(0, rc);
-	}
 
+		// TODO: initial picture contains wallpaper + taskbar only...
+
+		RefreshPicture();
+	}
 	return m_picture;
+}
+
+void Desktop::RefreshPicture()
+{
+	RECT rc;
+	delete [] m_picture;
+	m_picture = Capture::CaptureWindow(0, rc);
 }
 

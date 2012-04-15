@@ -9,23 +9,29 @@ class DesktopManager;
 class FullScreenView : public FastWindow
 {
 public:
-	FullScreenView();
+	explicit FullScreenView(DesktopManager* dm);
 	virtual ~FullScreenView();
 
-	bool Start(HWND parent, DesktopManager* dm);
+	bool Create(HWND parent);
 
 private:
+	bool CreateThumbnails();
+	void DestroyThumbnails();
 	void CalculateThumbnailsLayout(int W, int H, int n, std::vector<POINT>& coords, int& w, int& h);
 
 	LRESULT OnLeftButtonDown(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 	LRESULT OnThumbnailClicked(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 	LRESULT OnPaint(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+	LRESULT OnSize(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+	LRESULT OnShowWindow(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 	
-	std::vector<FullScreenViewThumbnail> m_thumbnails;
+	std::vector<FullScreenViewThumbnail*> m_thumbnails;
 	DesktopManager* m_dm;
 
 	static bool s_initialized;
 	static void RegisterClass();
 };
+
+extern FullScreenView* fullScreenView;
 
 #endif //__FULLSCREENVIEW_H__

@@ -39,6 +39,7 @@
 #include "HookDLL.h"
 #include "Locale.h"
 #include "CmdLine.h"
+#include "FullScreenView.h"
 
 // Global Variables:
 HWND configBox = NULL;
@@ -269,7 +270,8 @@ bool VirtualDimension::Start(HINSTANCE hInstance, int nCmdShow)
       Refresh();
    }
 
-   return true;
+   fullScreenView = new FullScreenView(deskMan);
+   return fullScreenView->Create(0);
 }
 
 VirtualDimension::~VirtualDimension()
@@ -601,6 +603,8 @@ LRESULT VirtualDimension::OnDestroy(HWND /*hWnd*/, UINT /*message*/, WPARAM /*wP
 
    // Destroy the mouse warp
    delete mousewarp;
+
+   delete fullScreenView;
 
    // Destroy the desktop manager
    delete deskMan;

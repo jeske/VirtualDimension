@@ -1,6 +1,9 @@
 #include "stdafx.h"
 #include "DesktopManager.h"
+#include "Resource.h"
 #include "FullScreenView.h"
+
+FullScreenView* fullScreenView;
 
 static LPCTSTR s_className = "VirtualDimensionFSV";
 
@@ -10,23 +13,28 @@ static const int s_border = 8;
 
 bool FullScreenView::s_initialized = false;
 
-FullScreenView::FullScreenView()
-	: m_dm(0)
+FullScreenView::FullScreenView(DesktopManager* dm)
+	: m_dm(dm)
 {
 	if (!s_initialized) {
 		RegisterClass();
 		s_initialized = true;
 	}
 	SetMessageHandler(WM_PAINT, this, &FullScreenView::OnPaint);
+	
+	//SetMessageHandler(WM_ACTIVATEAPP, this, &FullScreenView::OnShowWindow);
 	SetMessageHandler(WM_LBUTTONDOWN, this, &FullScreenView::OnLeftButtonDown);
 	SetMessageHandler(MSG_FSV_THUMBNAIL, this, &FullScreenView::OnThumbnailClicked);
 }
 
 FullScreenView::~FullScreenView()
-{}
+{
+	DestroyThumbnails();
+}
 
 void FullScreenView::RegisterClass()
 {
+	HINSTANCE hinst = GetModuleHandle(0);
 	WNDCLASSEX wcex;
 
 	wcex.cbSize = sizeof(WNDCLASSEX);
@@ -34,8 +42,8 @@ void FullScreenView::RegisterClass()
 	wcex.style			= CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS;
 	wcex.cbClsExtra		= 0;
 	wcex.cbWndExtra		= 0;
-	wcex.hInstance		= GetModuleHandle(0);
-	wcex.hIcon			= 0;
+	wcex.hInstance		= hinst;
+	wcex.hIcon			= LoadIcon(hinst, (LPCTSTR)IDI_VIRTUALDIMENSION);
 	wcex.hCursor		= LoadCursor(NULL, IDC_ARROW);
 	wcex.hbrBackground	= (HBRUSH)GetStockObject(HOLLOW_BRUSH);
 	wcex.lpszMenuName	= 0;
@@ -45,14 +53,43 @@ void FullScreenView::RegisterClass()
 	FastWindow::RegisterClassEx(&wcex);
 }
 
-bool FullScreenView::Start(HWND parent, DesktopManager* dm)
+bool FullScreenView::Create(HWND parent)
 {
-	int n = dm->GetNbDesktops();
+	RECT workarea;
+	SystemParametersInfo(SPI_GETWORKAREA, 0, &workarea, 0);
+	
+	int W = workarea.right - workarea.left;
+	int H = workarea.bottom - workarea.top;
+
+	HINSTANCE hinst = GetModuleHandle(0);
+
+	TCHAR title[80];
+	LoadString(hinst, IDS_APP_TITLE, title, 80);
+
+	HWND hwnd = FastWindow::Create(
+		WS_EX_TOPMOST, s_className, title, WS_POPUP | WS_MAXIMIZE, 
+		workarea.left, workarea.top, W, H, 
+		parent, 0, hinst
+	);
+	if (!hwnd)
+		return false;
+		
+	ShowWindow(hwnd, SW_MINIMIZE);
+
+	SetMessageHandler(WM_SIZE, this, &FullScreenView::OnSize);
+
+	return true;
+}
+
+bool FullScreenView::CreateThumbnails()
+{
+	m_dm->GetCurrentDesktop()->RefreshPicture();
+	DestroyThumbnails();
+
+	int n = m_dm->GetNbDesktops();
 	if (n <= 1)
 		return false;
 	
-	m_dm = dm;
-
 	RECT workarea;
 	SystemParametersInfo(SPI_GETWORKAREA, 0, &workarea, 0);
 	
@@ -62,25 +99,23 @@ bool FullScreenView::Start(HWND parent, DesktopManager* dm)
 	std::vector<POINT> coords;
 	int w, h;
 	CalculateThumbnailsLayout(W, H, n, coords, w, h);
-
-	HWND hwnd = FastWindow::Create(
-		WS_EX_TOPMOST, s_className, "", WS_POPUP | WS_MAXIMIZE, 
-		workarea.left, workarea.top, W, H, 
-		parent, 0, GetModuleHandle(0)
-	);
-	if (!hwnd)
-		return false;
-
+		
 	for (int i=0; i<n; ++i) {
-		FullScreenViewThumbnail th;
-		if (!th.Create(hwnd, s_border, coords[i].x, coords[i].y, w, h, i, dm->GetDesktop(i)->GetPicture())) {
-			PostMessage(hwnd, WM_CLOSE, 0, 0);
+		FullScreenViewThumbnail* th = new FullScreenViewThumbnail;
+		m_thumbnails.push_back(th);
+		if (!th->Create(m_hWnd, s_border, coords[i].x, coords[i].y, w, h, i, m_dm->GetDesktop(i)->GetPicture())) {
+			DestroyThumbnails();
 			return false;
 		}
 	}
+	return true;
+}
 
-	ShowWindow(hwnd, SW_MAXIMIZE);
-	UpdateWindow(hwnd);
+void FullScreenView::DestroyThumbnails()
+{
+	for (size_t i=0; i<m_thumbnails.size(); ++i)
+		delete m_thumbnails[i];
+	m_thumbnails.clear();
 }
 
 namespace
@@ -129,25 +164,30 @@ void FullScreenView::CalculateThumbnailsLayout(
 	p.y = vpadding + i*(2*s_border + h + s_spacing);
 	for (int j=0; j<cols_last_row; ++j) {
 		p.x = hpadding_last_row + j*(2*s_border + w + s_spacing);
+		coords.push_back(p);
 	}
 }
 
 LRESULT FullScreenView::OnLeftButtonDown(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	PostMessage(*this, WM_CLOSE, 0, 0);
+	ShowWindow(*this, SW_MINIMIZE);
 	return 0;
 }
 
 LRESULT FullScreenView::OnThumbnailClicked(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	int index = (int)wParam;
-	SendMessage(*this, WM_CLOSE, 0, 0); //???? 
+	ShowWindow(m_hWnd, SW_MINIMIZE);
 	m_dm->SwitchToDesktop(m_dm->GetDesktop(index));
 	return 0;
 }
 
 LRESULT FullScreenView::OnPaint(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+	if (IsIconic(m_hWnd)) {
+		return DefWindowProc(hWnd, message, wParam, lParam);
+	}
+	
 	PAINTSTRUCT ps;
 	RECT rect;
 	HDC hdc;
@@ -162,3 +202,20 @@ LRESULT FullScreenView::OnPaint(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 	return 0;
 }
 
+LRESULT FullScreenView::OnSize(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	if (wParam == SIZE_MINIMIZED) {
+		return DefWindowProc(hWnd, message, wParam, lParam);
+	}
+	if (wParam == SIZE_MAXIMIZED) {
+		CreateThumbnails();
+		return DefWindowProc(hWnd, message, wParam, lParam);
+	}
+	return DefWindowProc(hWnd, message, wParam, lParam);
+}
+
+LRESULT FullScreenView::OnShowWindow(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	
+	return DefWindowProc(hWnd, message, wParam, lParam);
+}

@@ -63,6 +63,7 @@ bool FullScreenViewThumbnail::Create(HWND parent, int border, int x, int y, int 
 	m_picH = h;
 
 	m_picture = new char[w*h*3];
+	memset(m_picture, 0, w*h*3);
 	int W = GetSystemMetrics(SM_CXSCREEN);
 	int H = GetSystemMetrics(SM_CYSCREEN);
 	Scaling::Scale(picture, W, H, m_picture, w, h);
@@ -129,17 +130,22 @@ LRESULT FullScreenViewThumbnail::OnPaint(HWND hWnd, UINT message, WPARAM wParam,
 
 	HPEN pen = CreatePen(PS_NULL,0,0);
 	HBRUSH br = CreateSolidBrush(m_hover ? s_activeBC : s_inactiveBC);
+	SelectObject(hdc, pen);
+	SelectObject(hdc, br);
 	RoundRect(hdc, rect.left, rect.top, rect.right, rect.bottom, 8, 8);
 	
 	SetStretchBltMode(hdc, COLORONCOLOR);
 	StretchDIBits(
 		hdc,
-		rect.left + m_border, rect.bottom - rect.top + m_border,
-		rect.right - rect.left - m_border, rect.top - rect.bottom + m_border,
+		rect.left + m_border, rect.top + m_border, 
+		//rect.right - rect.left - 2*m_border, rect.top - rect.bottom - 2*m_border,
+		m_picW, m_picH,
 		0, 0, m_picW, m_picH, m_picture, &m_bi, DIB_RGB_COLORS, SRCCOPY
 	);
 
 	EndPaint(hWnd, &ps);
+	DeleteObject(br);
+	DeleteObject(pen);
 	return 0;
 }
 

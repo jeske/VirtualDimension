@@ -81,7 +81,8 @@ public:
 
    bool Configure(HWND hDlg);
 
-   const void* GetPicture() const;
+   const void* GetPicture();
+   void RefreshPicture();
 
    static BOOL CALLBACK ActivateTopWindowProc( HWND hWnd, LPARAM lParam );
 protected:
@@ -105,8 +106,8 @@ protected:
 
    TaskPool m_taskPool;
 
-   mutable void* m_picture;
-
+   void* m_picture;
+      
    class DesktopProperties
    {
    public:
