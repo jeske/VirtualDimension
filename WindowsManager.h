@@ -95,7 +95,9 @@ protected:
 	LRESULT OnStartOnDesktop(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
    LRESULT OnShellHookMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 	LRESULT OnWindowSizeMove(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+public:
    void OnWindowCreated(HWND hWnd);       //window has just been created
+protected:
    void OnWindowDestroyed(HWND hWnd);     //window is going to be destroyed
    void OnWindowActivated(HWND hWnd);     //activation changed to another window
    void OnGetMinRect(HWND hWnd);          //window minimized/maximized

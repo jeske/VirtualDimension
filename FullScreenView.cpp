@@ -55,11 +55,12 @@ void FullScreenView::RegisterClass()
 bool FullScreenView::Create(HWND parent)
 {
 	m_parent = parent;
-	RECT workarea;
-	SystemParametersInfo(SPI_GETWORKAREA, 0, &workarea, 0);
 	
-	int W = workarea.right - workarea.left;
-	int H = workarea.bottom - workarea.top;
+	//RECT workarea;
+	//SystemParametersInfo(SPI_GETWORKAREA, 0, &workarea, 0);
+	
+	int W = GetSystemMetrics(SM_CXSCREEN); //workarea.right - workarea.left;
+	int H = GetSystemMetrics(SM_CYSCREEN); //workarea.bottom - workarea.top;
 
 	HINSTANCE hinst = GetModuleHandle(0);
 
@@ -68,7 +69,9 @@ bool FullScreenView::Create(HWND parent)
 
 	HWND hwnd = FastWindow::Create(
 		WS_EX_TOPMOST, s_className, title, WS_POPUP | WS_MAXIMIZE, 
-		workarea.left, workarea.top, W, H, 
+		//workarea.left, workarea.top, 
+		0, 0,
+		W, H, 
 		0, 0, hinst
 	);
 	if (!hwnd)
@@ -90,11 +93,11 @@ bool FullScreenView::CreateThumbnails()
 	if (n <= 1)
 		return false;
 	
-	RECT workarea;
-	SystemParametersInfo(SPI_GETWORKAREA, 0, &workarea, 0);
+	//RECT workarea;
+	//SystemParametersInfo(SPI_GETWORKAREA, 0, &workarea, 0);
 	
-	int W = workarea.right - workarea.left;
-	int H = workarea.bottom - workarea.top;
+	int W = GetSystemMetrics(SM_CXSCREEN); //workarea.right - workarea.left;
+	int H = GetSystemMetrics(SM_CYSCREEN); //workarea.bottom - workarea.top;
 	
 	std::vector<POINT> coords;
 	int w, h;
