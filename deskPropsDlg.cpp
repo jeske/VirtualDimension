@@ -146,33 +146,33 @@ void Desktop::DesktopProperties::OnWallpaperChanged(HWND hDlg, HWND ctrl)
 
 void Desktop::DesktopProperties::OnBrowseWallpaper(HWND hDlg, bool inStandardDir)
 {
-   OPENFILENAME ofn;
+	OPENFILENAME ofn;
 	String filter;
 
-   // Reset text if a special mode is selected, to let the dialog open properly.
-   if (*m_wallpaper == '<')
-      *m_wallpaper = 0;
+	// Reset text if a special mode is selected, to let the dialog open properly.
+	if (*m_wallpaper == '<')
+	   *m_wallpaper = 0;
 
-   // Initialize OPENFILENAME
-   ZeroMemory(&ofn, sizeof(OPENFILENAME));
-   ofn.lStructSize = sizeof(OPENFILENAME);
-   ofn.hwndOwner = hDlg;
-   ofn.lpstrFile = m_wallpaper;
-   ofn.nMaxFile = MAX_PATH;
+	// Initialize OPENFILENAME
+	ZeroMemory(&ofn, sizeof(OPENFILENAME));
+	ofn.lStructSize = sizeof(OPENFILENAME);
+	ofn.hwndOwner = hDlg;
+	ofn.lpstrFile = m_wallpaper;
+	ofn.nMaxFile = MAX_PATH;
 	filter = Locale::GetInstance().GetString(IDS_PICTUREFILTER);
 	filter.Replace('|', 0);
 	ofn.lpstrFilter = filter;
-   ofn.nFilterIndex = 1;
-   ofn.lpstrFileTitle = NULL;
-   ofn.nMaxFileTitle = 0;
-   ofn.lpstrInitialDir = inStandardDir ? m_standardDir : NULL;
-   locGetString(ofn.lpstrTitle, IDS_SELECT_WALLPAPER);
-   ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_EXPLORER /*| OFN_ENABLESIZING*/;
+	ofn.nFilterIndex = 1;
+	ofn.lpstrFileTitle = NULL;
+	ofn.nMaxFileTitle = 0;
+	ofn.lpstrInitialDir = inStandardDir ? m_standardDir : NULL;
+	locGetString(ofn.lpstrTitle, IDS_SELECT_WALLPAPER);
+	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_EXPLORER /*| OFN_ENABLESIZING*/;
 
-   if (GetOpenFileName(&ofn) == TRUE)
-      SendMessage(GetDlgItem(hDlg, IDC_WALLPAPER), WM_SETTEXT, 0, (LPARAM)m_wallpaper);
-   else
-      SendMessage(GetDlgItem(hDlg, IDC_WALLPAPER), WM_GETTEXT, MAX_PATH, (LPARAM)m_wallpaper);
+	if (GetOpenFileName(&ofn) == TRUE)
+	   SendMessage(GetDlgItem(hDlg, IDC_WALLPAPER), WM_SETTEXT, 0, (LPARAM)m_wallpaper);
+	else
+	   SendMessage(GetDlgItem(hDlg, IDC_WALLPAPER), WM_GETTEXT, MAX_PATH, (LPARAM)m_wallpaper);
 }
 
 void Desktop::DesktopProperties::OnChooseWallpaper(HWND hDlg)
