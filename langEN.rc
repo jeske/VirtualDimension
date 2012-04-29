@@ -62,6 +62,7 @@ BEGIN
         MENUITEM "&Reset",                      IDC_PREVIOUS_WALLPAPER
         MENUITEM SEPARATOR
         MENUITEM "&Browse...",                  IDC_BROWSE_WALLPAPER
+		MENUITEM "Browse &standard wallpaper...", IDC_BROWSE_STANDARD_WALLPAPER
     END
 END
 

@@ -28,9 +28,53 @@
 #include "HotKeyControl.h"
 #include "Locale.h"
 
+namespace
+{
+	void GetStandardWallpaperDir(TCHAR* out)
+	{
+		*out = 0;
+		HKEY hkey;
+
+		LSTATUS ret = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion", 0, KEY_READ, &hkey);
+		if (ret != ERROR_SUCCESS) 
+			return;
+						
+		for (DWORD index = 0; ; ++index)
+		{
+			TCHAR valueName[80];
+			DWORD valueNameSize = 80;
+			BYTE data[MAX_PATH];
+			DWORD dataSize = MAX_PATH;
+			DWORD type = 0;
+			
+			ret = RegEnumValueA(hkey, index, valueName, &valueNameSize, 0, &type, data, &dataSize);
+			if (ret != ERROR_SUCCESS)
+				break;
+		
+			if (strcmp(valueName, "WallPaperDir"))
+				continue;
+			
+			switch(type)
+			{
+			case REG_SZ:
+			case REG_EXPAND_SZ:
+				strcpy(out, (const char*)data);
+				break;
+			default:
+				break;
+			}
+
+			break;
+		}
+
+		RegCloseKey(hkey);
+	}
+}
+
 Desktop::DesktopProperties::DesktopProperties(Desktop* desktop): m_desk(desktop), m_picture(NULL)
 {
-   return;
+   m_wallpaper[0] = 0;
+   GetStandardWallpaperDir(m_standardDir);
 }
 
 Desktop::DesktopProperties::~DesktopProperties()
@@ -100,7 +144,7 @@ void Desktop::DesktopProperties::OnWallpaperChanged(HWND hDlg, HWND ctrl)
    EnableWindow(GetDlgItem(hDlg, IDC_APPLY), TRUE);
 }
 
-void Desktop::DesktopProperties::OnBrowseWallpaper(HWND hDlg)
+void Desktop::DesktopProperties::OnBrowseWallpaper(HWND hDlg, bool inStandardDir)
 {
    OPENFILENAME ofn;
 	String filter;
@@ -121,7 +165,7 @@ void Desktop::DesktopProperties::OnBrowseWallpaper(HWND hDlg)
    ofn.nFilterIndex = 1;
    ofn.lpstrFileTitle = NULL;
    ofn.nMaxFileTitle = 0;
-   ofn.lpstrInitialDir = NULL;
+   ofn.lpstrInitialDir = inStandardDir ? m_standardDir : NULL;
    locGetString(ofn.lpstrTitle, IDS_SELECT_WALLPAPER);
    ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_EXPLORER /*| OFN_ENABLESIZING*/;
 
@@ -236,7 +280,7 @@ LRESULT CALLBACK Desktop::DeskProperties(HWND hDlg, UINT message, WPARAM wParam,
          if (HIWORD(wParam) == BN_CLICKED)
             self->OnChooseWallpaper(hDlg);
          else if (HIWORD(wParam) == BN_DOUBLECLICKED)
-            self->OnBrowseWallpaper(hDlg);
+            self->OnBrowseWallpaper(hDlg, false);
         break;
 
       case IDC_DEFAULT_WALLPAPER:
@@ -252,7 +296,11 @@ LRESULT CALLBACK Desktop::DeskProperties(HWND hDlg, UINT message, WPARAM wParam,
          break;
 
       case IDC_BROWSE_WALLPAPER:
-         self->OnBrowseWallpaper(hDlg);
+         self->OnBrowseWallpaper(hDlg, false);
+         break;
+
+	  case IDC_BROWSE_STANDARD_WALLPAPER:
+         self->OnBrowseWallpaper(hDlg, true);
          break;
 
       case IDC_WALLPAPER:

@@ -118,7 +118,7 @@ protected:
       void InitDialog(HWND hDlg);
       bool Apply(HWND hDlg);
       void OnWallpaperChanged(HWND hDlg, HWND ctrl);
-      void OnBrowseWallpaper(HWND hDlg);
+      void OnBrowseWallpaper(HWND hDlg, bool inStandardDir);
       void OnChooseWallpaper(HWND hDlg);
       void OnPreviewDrawItem(LPDRAWITEMSTRUCT lpDrawItem);
       void OnBgColorDrawItem(LPDRAWITEMSTRUCT lpDrawItem);
@@ -129,6 +129,7 @@ protected:
       Desktop * m_desk;
       IPicture * m_picture;
       TCHAR m_wallpaper[MAX_PATH];
+	  TCHAR m_standardDir[MAX_PATH];
       COLORREF m_bgColor;
    };
 };
