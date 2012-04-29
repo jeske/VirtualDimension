@@ -65,14 +65,60 @@ map<HWND,HWNDHookData*> m_HookData;
 UINT VDtoSysItemID(UINT id)   { return VDM_SYSBASE + (id<<4); }
 UINT SystoVDItemID(UINT msg)  { return (msg - VDM_SYSBASE) >> 4; }
 
+template <class TChar> struct EncodingSensitiveFunctions
+{
+	HANDLE (WINAPI *GetPropF)(HWND, const TChar*);
+	LRESULT (WINAPI *SendMessageF)(HWND, UINT, WPARAM, LPARAM);
+	BOOL (WINAPI *PostMessageF)(HWND, UINT, WPARAM, LPARAM);
+	LONG_PTR (WINAPI *SetWindowLongPtrF)(HWND, int, LONG_PTR);
+	LRESULT (WINAPI *CallWindowProcF)(WNDPROC, HWND, UINT, WPARAM, LPARAM);
+	TChar* MAKEINTRESOURCEF(int i) {
+		return (TChar*)(ULONG_PTR)(WORD)i;
+	}
+};
+
+template <class TChar>
+LRESULT hookWndProc(
+	HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam,
+	EncodingSensitiveFunctions<TChar> F
+);
+
 LRESULT CALLBACK hookWndProcW(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	static EncodingSensitiveFunctions<wchar_t> FunctionsW = {
+		GetPropW,
+		SendMessageW,
+		PostMessageW,
+		SetWindowLongPtrW,
+		CallWindowProcW
+	};
+	return hookWndProc(hWnd, message, wParam, lParam, FunctionsW);
+};
+
+LRESULT CALLBACK hookWndProcA(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	static const EncodingSensitiveFunctions<char> FunctionsA = {
+		GetPropA,
+		SendMessageA,
+		PostMessageA,
+		SetWindowLongPtrA,
+		CallWindowProcA
+	};
+	return hookWndProc(hWnd, message, wParam, lParam, FunctionsA);
+};
+
+template <class TChar>
+LRESULT hookWndProc(
+	HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam,
+	EncodingSensitiveFunctions<TChar> F
+)
 {
    HWNDHookData * pData;
    LRESULT res = 0;
    UINT_PTR syscmd;
 
    //Get the hook information
-   pData = (HWNDHookData*)GetPropW(hWnd, (LPWSTR)MAKEINTRESOURCEW(g_aPropName));
+   pData = (HWNDHookData*)F.GetPropF(hWnd, F.MAKEINTRESOURCEF(g_aPropName));
    if (!pData)
       return 0;
 
@@ -91,8 +137,8 @@ LRESULT CALLBACK hookWndProcW(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
       {
 		case SC_MINIMIZE:
          //Minimize using VD
-         if (SendMessageW(hVDWnd, WM_VD_CHECK_MIN_TO_TRAY, 0, (WPARAM)pData->m_iData))
-            res = PostMessageW(hVDWnd, WM_VD_HOOK_MENU_COMMAND, VDM_MINIMIZE, (WPARAM)pData->m_iData);
+         if (F.SendMessageF(hVDWnd, WM_VD_CHECK_MIN_TO_TRAY, 0, (WPARAM)pData->m_iData))
+            res = F.PostMessageF(hVDWnd, WM_VD_HOOK_MENU_COMMAND, VDM_MINIMIZE, (WPARAM)pData->m_iData);
          break;
 
       case SC_MAXIMIZE:
@@ -102,10 +148,10 @@ LRESULT CALLBACK hookWndProcW(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 
             if (shift && !ctrl)
                //Maximize width using VD
-               res = PostMessageW(hVDWnd, WM_VD_HOOK_MENU_COMMAND, VDM_MAXIMIZEWIDTH, (WPARAM)pData->m_iData);
+               res = F.PostMessageF(hVDWnd, WM_VD_HOOK_MENU_COMMAND, VDM_MAXIMIZEWIDTH, (WPARAM)pData->m_iData);
             else if (ctrl && !shift)
                //Maximize height using VD
-               res = PostMessageW(hVDWnd, WM_VD_HOOK_MENU_COMMAND, VDM_MAXIMIZEHEIGHT, (WPARAM)pData->m_iData);
+               res = F.PostMessageF(hVDWnd, WM_VD_HOOK_MENU_COMMAND, VDM_MAXIMIZEHEIGHT, (WPARAM)pData->m_iData);
          }
          break;
 
@@ -113,7 +159,7 @@ LRESULT CALLBACK hookWndProcW(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 			if (GetKeyState(VK_SHIFT) & 0x8000)
 			{
 				SetForegroundWindow(hVDWnd);
-				res = PostMessageW(hVDWnd, WM_VD_HOOK_MENU_COMMAND, VDM_KILL, (WPARAM)pData->m_iData);
+				res = F.PostMessageF(hVDWnd, WM_VD_HOOK_MENU_COMMAND, VDM_KILL, (WPARAM)pData->m_iData);
 			}
 			break;
 
@@ -121,7 +167,7 @@ LRESULT CALLBACK hookWndProcW(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
          if (pData->m_hSubMenu && FindMenuItem(syscmd, pData->m_hSubMenu) != -1)
 			{
 		 		SetForegroundWindow(hVDWnd);
-            res = PostMessageW(hVDWnd, WM_VD_HOOK_MENU_COMMAND, SystoVDItemID(syscmd), (WPARAM)pData->m_iData);
+				res = F.PostMessageF(hVDWnd, WM_VD_HOOK_MENU_COMMAND, SystoVDItemID(syscmd), (WPARAM)pData->m_iData);
 			}
          break;
       }
@@ -134,7 +180,7 @@ LRESULT CALLBACK hookWndProcW(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 
    case WM_ACTIVATE:
       if (LOWORD(wParam) != WA_INACTIVE)
-         PostMessageW(hVDWnd, g_uiShellHookMsg, HSHELL_WINDOWACTIVATED, (LPARAM)hWnd);
+         F.PostMessageF(hVDWnd, g_uiShellHookMsg, HSHELL_WINDOWACTIVATED, (LPARAM)hWnd);
       break;
 
 	case WM_NCMBUTTONDOWN:
@@ -142,26 +188,26 @@ LRESULT CALLBACK hookWndProcW(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 		break;
 
 	case WM_ENTERSIZEMOVE:
-		PostMessageW(hVDWnd, WM_VD_WNDSIZEMOVE, (WPARAM)hWnd, TRUE);
+		F.PostMessageF(hVDWnd, WM_VD_WNDSIZEMOVE, (WPARAM)hWnd, TRUE);
 		break;
 
 	case WM_EXITSIZEMOVE:
-		PostMessageW(hVDWnd, WM_VD_WNDSIZEMOVE, (WPARAM)hWnd, FALSE);
+		F.PostMessageF(hVDWnd, WM_VD_WNDSIZEMOVE, (WPARAM)hWnd, FALSE);
 		break;
 
    case WM_DESTROY:
 	   {
 			//Restore window procedure
-			SetWindowLongPtrW(hWnd, GWLP_WNDPROC, (LONG_PTR)pData->m_fnPrevWndProc);
-
+			F.SetWindowLongPtrF(hWnd, GWLP_WNDPROC, (LONG_PTR)pData->m_fnPrevWndProc);
+			
 			//Alert VD window
-			PostMessageW(hVDWnd, g_uiShellHookMsg, HSHELL_WINDOWDESTROYED, (LPARAM)hWnd);
+			F.PostMessageF(hVDWnd, g_uiShellHookMsg, HSHELL_WINDOWDESTROYED, (LPARAM)hWnd);
 		}
 		break;
    }
 
    if (res == 0)
-      res = CallWindowProcW(pData->m_fnPrevWndProc, hWnd, message, wParam, lParam);
+      res = F.CallWindowProcF(pData->m_fnPrevWndProc, hWnd, message, wParam, lParam);
 
    //Release the mutex to give back access to the data
    ReleaseMutex(pData->m_hMutex);
@@ -169,109 +215,213 @@ LRESULT CALLBACK hookWndProcW(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
    return res;
 }
 
-LRESULT CALLBACK hookWndProcA(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
-{
-   HWNDHookData * pData;
-   LRESULT res = 0;
-   UINT_PTR syscmd;
-
-   //Get the hook information
-   pData = (HWNDHookData*)GetPropA(hWnd, (LPSTR)MAKEINTRESOURCEA(g_aPropName));
-   if (!pData)
-      return 0;
-
-   //Gain access to the data
-   WaitForSingleObject(pData->m_hMutex, INFINITE);
-
-   //Mark that the hook procedure has been called
-   pData->m_bHookWndProcCalled = true;
-
-   //Process the message
-   switch(message)
-   {
-   case WM_SYSCOMMAND:
-      syscmd = wParam&0xfff0;
-      switch(syscmd)
-      {
-      case SC_MINIMIZE:
-         //Minimize using VD
-         if (SendMessageA(hVDWnd, WM_VD_CHECK_MIN_TO_TRAY, 0, (WPARAM)pData->m_iData))
-            res = PostMessageA(hVDWnd, WM_VD_HOOK_MENU_COMMAND, VDM_MINIMIZE, (WPARAM)pData->m_iData);
-         break;
-
-      case SC_MAXIMIZE:
-		   {
-				short shift = GetKeyState(VK_SHIFT) & 0x8000;
-				short ctrl = GetKeyState(VK_CONTROL) & 0x8000;
-
-				if (shift && !ctrl)
-					//Maximize width using VD
-					res = PostMessageA(hVDWnd, WM_VD_HOOK_MENU_COMMAND, VDM_MAXIMIZEWIDTH, (WPARAM)pData->m_iData);
-				else if (ctrl && !shift)
-					//Maximize height using VD
-					res = PostMessageA(hVDWnd, WM_VD_HOOK_MENU_COMMAND, VDM_MAXIMIZEHEIGHT, (WPARAM)pData->m_iData);
-				break;
-			}
-
-		case SC_CLOSE:
-			if (GetKeyState(VK_SHIFT) & 0x8000)
-			{
-				SetForegroundWindow(hVDWnd);
-				res = PostMessageA(hVDWnd, WM_VD_HOOK_MENU_COMMAND, VDM_KILL, (WPARAM)pData->m_iData);
-			}
-			break;
-
-      default:
-         if (pData->m_hSubMenu && FindMenuItem(syscmd, pData->m_hSubMenu) != -1)
-         {
-            SetForegroundWindow(hVDWnd);
-            res = PostMessageA(hVDWnd, WM_VD_HOOK_MENU_COMMAND, SystoVDItemID(syscmd), (WPARAM)pData->m_iData);
-         }
-         break;
-      }
-      break;
-
-	case WM_INITMENUPOPUP:
-		if (pData->m_hSubMenu && (HMENU)wParam == pData->m_hSubMenu)
-			InitPopupMenu(hWnd, (HMENU)wParam);
-		break;
-
-   case WM_ACTIVATE:
-      if (LOWORD(wParam) != WA_INACTIVE)
-         PostMessageA(hVDWnd, g_uiShellHookMsg, HSHELL_WINDOWACTIVATED, (LPARAM)hWnd);
-      break;
-
-	case WM_NCMBUTTONDOWN:
-		SetWindowPos(hWnd, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOACTIVATE|SWP_NOMOVE|SWP_NOSIZE);
-		break;
-
-	case WM_ENTERSIZEMOVE:
-		PostMessageA(hVDWnd, WM_VD_WNDSIZEMOVE, (WPARAM)hWnd, TRUE);
-		break;
-
-	case WM_EXITSIZEMOVE:
-		PostMessageA(hVDWnd, WM_VD_WNDSIZEMOVE, (WPARAM)hWnd, FALSE);
-		break;
-
-   case WM_DESTROY:
-	   {
-			//Restore window procedure
-			SetWindowLongPtrA(hWnd, GWLP_WNDPROC, (LONG_PTR)pData->m_fnPrevWndProc);
-
-			//Alert VD window
-			PostMessageA(hVDWnd, g_uiShellHookMsg, HSHELL_WINDOWDESTROYED, (LPARAM)hWnd);
-		}
-		break;
-	}
-
-   if (res == 0)
-      res = CallWindowProcA(pData->m_fnPrevWndProc, hWnd, message, wParam, lParam);
-
-   //Release the mutex to give back access to the data
-   ReleaseMutex(pData->m_hMutex);
-
-   return res;
-}
+//LRESULT CALLBACK hookWndProcW(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+//{
+//   HWNDHookData * pData;
+//   LRESULT res = 0;
+//   UINT_PTR syscmd;
+//
+//   //Get the hook information
+//   pData = (HWNDHookData*)GetPropW(hWnd, (LPWSTR)MAKEINTRESOURCEW(g_aPropName));
+//   if (!pData)
+//      return 0;
+//
+//   //Gain access to the data
+//   WaitForSingleObject(pData->m_hMutex, INFINITE);
+//
+//   //Mark that the hook procedure has been called
+//   pData->m_bHookWndProcCalled = true;
+//
+//   //Process the message
+//   switch(message)
+//   {
+//   case WM_SYSCOMMAND:
+//      syscmd = wParam&0xfff0;
+//      switch(syscmd)
+//      {
+//		case SC_MINIMIZE:
+//         //Minimize using VD
+//         if (SendMessageW(hVDWnd, WM_VD_CHECK_MIN_TO_TRAY, 0, (WPARAM)pData->m_iData))
+//            res = PostMessageW(hVDWnd, WM_VD_HOOK_MENU_COMMAND, VDM_MINIMIZE, (WPARAM)pData->m_iData);
+//         break;
+//
+//      case SC_MAXIMIZE:
+//         {
+//            short shift = GetKeyState(VK_SHIFT) & 0x8000;
+//            short ctrl = GetKeyState(VK_CONTROL) & 0x8000;
+//
+//            if (shift && !ctrl)
+//               //Maximize width using VD
+//               res = PostMessageW(hVDWnd, WM_VD_HOOK_MENU_COMMAND, VDM_MAXIMIZEWIDTH, (WPARAM)pData->m_iData);
+//            else if (ctrl && !shift)
+//               //Maximize height using VD
+//               res = PostMessageW(hVDWnd, WM_VD_HOOK_MENU_COMMAND, VDM_MAXIMIZEHEIGHT, (WPARAM)pData->m_iData);
+//         }
+//         break;
+//
+//		case SC_CLOSE:
+//			if (GetKeyState(VK_SHIFT) & 0x8000)
+//			{
+//				SetForegroundWindow(hVDWnd);
+//				res = PostMessageW(hVDWnd, WM_VD_HOOK_MENU_COMMAND, VDM_KILL, (WPARAM)pData->m_iData);
+//			}
+//			break;
+//
+//      default:
+//         if (pData->m_hSubMenu && FindMenuItem(syscmd, pData->m_hSubMenu) != -1)
+//			{
+//		 		SetForegroundWindow(hVDWnd);
+//            res = PostMessageW(hVDWnd, WM_VD_HOOK_MENU_COMMAND, SystoVDItemID(syscmd), (WPARAM)pData->m_iData);
+//			}
+//         break;
+//      }
+//      break;
+//
+//	case WM_INITMENUPOPUP:
+//		if (pData->m_hSubMenu && (HMENU)wParam == pData->m_hSubMenu)
+//			InitPopupMenu(hWnd, (HMENU)wParam);
+//		break;
+//
+//   case WM_ACTIVATE:
+//      if (LOWORD(wParam) != WA_INACTIVE)
+//         PostMessageW(hVDWnd, g_uiShellHookMsg, HSHELL_WINDOWACTIVATED, (LPARAM)hWnd);
+//      break;
+//
+//	case WM_NCMBUTTONDOWN:
+//		SetWindowPos(hWnd, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOACTIVATE|SWP_NOMOVE|SWP_NOSIZE);
+//		break;
+//
+//	case WM_ENTERSIZEMOVE:
+//		PostMessageW(hVDWnd, WM_VD_WNDSIZEMOVE, (WPARAM)hWnd, TRUE);
+//		break;
+//
+//	case WM_EXITSIZEMOVE:
+//		PostMessageW(hVDWnd, WM_VD_WNDSIZEMOVE, (WPARAM)hWnd, FALSE);
+//		break;
+//
+//   case WM_DESTROY:
+//	   {
+//			//Restore window procedure
+//			SetWindowLongPtrW(hWnd, GWLP_WNDPROC, (LONG_PTR)pData->m_fnPrevWndProc);
+//			
+//			//Alert VD window
+//			PostMessageW(hVDWnd, g_uiShellHookMsg, HSHELL_WINDOWDESTROYED, (LPARAM)hWnd);
+//		}
+//		break;
+//   }
+//
+//   if (res == 0)
+//      res = CallWindowProcW(pData->m_fnPrevWndProc, hWnd, message, wParam, lParam);
+//
+//   //Release the mutex to give back access to the data
+//   ReleaseMutex(pData->m_hMutex);
+//
+//   return res;
+//}
+//
+//LRESULT CALLBACK hookWndProcA(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+//{
+//   HWNDHookData * pData;
+//   LRESULT res = 0;
+//   UINT_PTR syscmd;
+//
+//   //Get the hook information
+//   pData = (HWNDHookData*)GetPropA(hWnd, (LPSTR)MAKEINTRESOURCEA(g_aPropName));
+//   if (!pData)
+//      return 0;
+//
+//   //Gain access to the data
+//   WaitForSingleObject(pData->m_hMutex, INFINITE);
+//
+//   //Mark that the hook procedure has been called
+//   pData->m_bHookWndProcCalled = true;
+//
+//   //Process the message
+//   switch(message)
+//   {
+//   case WM_SYSCOMMAND:
+//      syscmd = wParam&0xfff0;
+//      switch(syscmd)
+//      {
+//      case SC_MINIMIZE:
+//         //Minimize using VD
+//         if (SendMessageA(hVDWnd, WM_VD_CHECK_MIN_TO_TRAY, 0, (WPARAM)pData->m_iData))
+//            res = PostMessageA(hVDWnd, WM_VD_HOOK_MENU_COMMAND, VDM_MINIMIZE, (WPARAM)pData->m_iData);
+//         break;
+//
+//      case SC_MAXIMIZE:
+//		   {
+//				short shift = GetKeyState(VK_SHIFT) & 0x8000;
+//				short ctrl = GetKeyState(VK_CONTROL) & 0x8000;
+//
+//				if (shift && !ctrl)
+//					//Maximize width using VD
+//					res = PostMessageA(hVDWnd, WM_VD_HOOK_MENU_COMMAND, VDM_MAXIMIZEWIDTH, (WPARAM)pData->m_iData);
+//				else if (ctrl && !shift)
+//					//Maximize height using VD
+//					res = PostMessageA(hVDWnd, WM_VD_HOOK_MENU_COMMAND, VDM_MAXIMIZEHEIGHT, (WPARAM)pData->m_iData);
+//				break;
+//			}
+//
+//		case SC_CLOSE:
+//			if (GetKeyState(VK_SHIFT) & 0x8000)
+//			{
+//				SetForegroundWindow(hVDWnd);
+//				res = PostMessageA(hVDWnd, WM_VD_HOOK_MENU_COMMAND, VDM_KILL, (WPARAM)pData->m_iData);
+//			}
+//			break;
+//
+//      default:
+//         if (pData->m_hSubMenu && FindMenuItem(syscmd, pData->m_hSubMenu) != -1)
+//         {
+//            SetForegroundWindow(hVDWnd);
+//            res = PostMessageA(hVDWnd, WM_VD_HOOK_MENU_COMMAND, SystoVDItemID(syscmd), (WPARAM)pData->m_iData);
+//         }
+//         break;
+//      }
+//      break;
+//
+//	case WM_INITMENUPOPUP:
+//		if (pData->m_hSubMenu && (HMENU)wParam == pData->m_hSubMenu)
+//			InitPopupMenu(hWnd, (HMENU)wParam);
+//		break;
+//
+//   case WM_ACTIVATE:
+//      if (LOWORD(wParam) != WA_INACTIVE)
+//         PostMessageA(hVDWnd, g_uiShellHookMsg, HSHELL_WINDOWACTIVATED, (LPARAM)hWnd);
+//      break;
+//
+//	case WM_NCMBUTTONDOWN:
+//		SetWindowPos(hWnd, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOACTIVATE|SWP_NOMOVE|SWP_NOSIZE);
+//		break;
+//
+//	case WM_ENTERSIZEMOVE:
+//		PostMessageA(hVDWnd, WM_VD_WNDSIZEMOVE, (WPARAM)hWnd, TRUE);
+//		break;
+//
+//	case WM_EXITSIZEMOVE:
+//		PostMessageA(hVDWnd, WM_VD_WNDSIZEMOVE, (WPARAM)hWnd, FALSE);
+//		break;
+//
+//   case WM_DESTROY:
+//	   {
+//			//Restore window procedure
+//			SetWindowLongPtrA(hWnd, GWLP_WNDPROC, (LONG_PTR)pData->m_fnPrevWndProc);
+//
+//			//Alert VD window
+//			PostMessageA(hVDWnd, g_uiShellHookMsg, HSHELL_WINDOWDESTROYED, (LPARAM)hWnd);
+//		}
+//		break;
+//	}
+//
+//   if (res == 0)
+//      res = CallWindowProcA(pData->m_fnPrevWndProc, hWnd, message, wParam, lParam);
+//
+//   //Release the mutex to give back access to the data
+//   ReleaseMutex(pData->m_hMutex);
+//
+//   return res;
+//}
 
 HOOKDLL_API DWORD WINAPI doHookWindow(HWND hWnd, int data)
 {

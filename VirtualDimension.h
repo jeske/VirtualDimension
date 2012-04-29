@@ -58,6 +58,9 @@ public:
 	int GetAutoHideDelay() const			{ return m_autoHideDelay; }
 	void SetAutoHideDelay(int delay)		{ m_autoHideDelay = delay; }
 
+	bool IsClickToUnhide() const			{ return m_clickToUnhide; }
+	void SetClickToUnhide(bool flag)		{ m_clickToUnhide = flag; }
+
 	void Shrink(void);
 	void UnShrink(void);
 
@@ -94,6 +97,7 @@ protected:
    bool m_hasCaption;
 	bool m_isWndVisible;
 	int m_autoHideDelay;
+	bool m_clickToUnhide;
    UINT_PTR m_autoHideTimerId;
 
    bool IsPreviewWindowLocked() const     { return m_lockPreviewWindow; }
@@ -134,9 +138,10 @@ protected:
 	LRESULT OnActivateApp(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 	LRESULT OnTimer(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
-	LRESULT OnMouseHover(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+	//LRESULT OnMouseHover(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+	LRESULT OnMouseMove(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 	LRESULT OnMouseLeave(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
-	LRESULT OnNCHitTest(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+	//LRESULT OnNCHitTest(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
    LRESULT OnPaint(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
    LRESULT OnSize(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);

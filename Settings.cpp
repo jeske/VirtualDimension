@@ -39,6 +39,7 @@ DEFINE_SETTING(Settings, TransparencyLevel, unsigned char, 0xff);
 DEFINE_SETTING(Settings, HasCaption, bool, true);
 DEFINE_SETTING(Settings, SnapSize, int, 15);
 DEFINE_SETTING(Settings, AutoHideDelay, int, 0);
+DEFINE_SETTING(Settings, ClickToUnhide, bool, false);
 DEFINE_SETTING(Settings, EnableToolTips, bool, true);
 DEFINE_SETTING(Settings, ConfirmKilling, bool, true);
 DEFINE_SETTING(Settings, AutoSaveWindowSettings, bool, false);

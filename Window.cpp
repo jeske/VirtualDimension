@@ -655,3 +655,28 @@ void Window::OnFlashBallonClick(BalloonNotification::Message /*msg*/, int data)
       wnd->Activate();
    }
 }
+
+void Window::SetMoving(bool moving)
+{ 
+	m_moving = moving;
+	if (!moving) // end of moving, refresh...
+	{
+		UpdatePicture();
+	}
+}
+
+void Window::UpdatePicture()
+{
+	if (IsIconic() || IsHidden()) {
+		memset(&m_currentRect, 0, sizeof(RECT));
+	}
+	else
+		GetWindowRect(m_hWnd, &m_currentRect);
+	char buf[1024];
+	char caption[512];
+	GetWindowText(m_hWnd, caption, 500);
+	sprintf(buf, "%s: {%d, %d, %d, %d}\n", caption, 
+		m_currentRect.left, m_currentRect.top, m_currentRect.right, m_currentRect.bottom);
+	OutputDebugString(buf);
+}
+

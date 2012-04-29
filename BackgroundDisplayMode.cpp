@@ -94,34 +94,34 @@ void PictureBackgroundDisplayMode::ReSize(int width, int height)
 
 bool PictureBackgroundDisplayMode::ChooseOptions(HWND hWnd)
 {
-   OPENFILENAME ofn;
-   BOOL res;
+	OPENFILENAME ofn;
+	BOOL res;
 	String filter;
 
-   ZeroMemory(&ofn, sizeof(OPENFILENAME));
-   ofn.lStructSize = sizeof(OPENFILENAME);
-   ofn.hwndOwner = hWnd;
-   ofn.lpstrFile = m_bkgrndPictureFile;
-   ofn.nMaxFile = MAX_PATH;
+	ZeroMemory(&ofn, sizeof(OPENFILENAME));
+	ofn.lStructSize = sizeof(OPENFILENAME);
+	ofn.hwndOwner = hWnd;
+	ofn.lpstrFile = m_bkgrndPictureFile;
+	ofn.nMaxFile = MAX_PATH;
 	filter = Locale::GetInstance().GetString(IDS_PICTUREFILTER);
 	filter.Replace('|', 0);
-   ofn.lpstrFilter = filter;
-   ofn.nFilterIndex = 1;
-   ofn.lpstrFileTitle = NULL;
-   ofn.nMaxFileTitle = 0;
-   ofn.lpstrInitialDir = NULL;
+	ofn.lpstrFilter = filter;
+	ofn.nFilterIndex = 1;
+	ofn.lpstrFileTitle = NULL;
+	ofn.nMaxFileTitle = 0;
+	ofn.lpstrInitialDir = NULL;
 	locGetString(ofn.lpstrTitle, IDS_SELECT_BACKGROUND);
-   ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_EXPLORER /*| OFN_ENABLESIZING*/;
+	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_EXPLORER /*| OFN_ENABLESIZING*/;
 
-   res = GetOpenFileName(&ofn);
-   if (res)
-   {
-      DeleteObject(m_selDeskBkPicture);
-      DeleteObject(m_deskBkPicture);
-      UpdatePictureObjects();
-   }
+	res = GetOpenFileName(&ofn);
+	if (res)
+	{
+		DeleteObject(m_selDeskBkPicture);
+		DeleteObject(m_deskBkPicture);
+		UpdatePictureObjects();
+	}
 
-   return res ? true : false;
+	return res ? true : false;
 }
 
 void PictureBackgroundDisplayMode::UpdatePictureObjects()

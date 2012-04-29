@@ -62,32 +62,32 @@ int APIENTRY _tWinMain( HINSTANCE hInstance,
 	HACCEL hAccelTable;
 	BOOL firstrun;
 
-   InitCommonControls();
-   CoInitialize ( NULL );
+	InitCommonControls();
+	CoInitialize ( NULL );
 
-   firstrun = vdWindow.Start(hInstance, nCmdShow);
+	firstrun = vdWindow.Start(hInstance, nCmdShow);
 	if (!firstrun)
 	{
-      CommandLineParser parser;
-   	parser.ParseCommandLine(lpCmdLine);
-      return -1;
+		CommandLineParser parser;
+		parser.ParseCommandLine(lpCmdLine);
+		return -1;
 	}
 
-   // Load accelerators
+	// Load accelerators
 	hAccelTable = LoadAccelerators(hInstance, (LPCTSTR)IDC_VIRTUALDIMENSION);
 
 	// Main message loop:
 	while (GetMessage(&msg, NULL, 0, 0))
 	{
 		if (IsWindow(configBox) && IsDialogMessage(configBox, &msg))
-      {
-         if (NULL == PropSheet_GetCurrentPageHwnd(configBox))
-         {
-            DestroyWindow(configBox);
-            configBox = NULL;
-         }
-      }
-      else if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
+		{
+		   if (NULL == PropSheet_GetCurrentPageHwnd(configBox))
+		   {
+			  DestroyWindow(configBox);
+			  configBox = NULL;
+		   }
+		}
+		else if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
 		{
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
@@ -105,74 +105,75 @@ VirtualDimension::VirtualDimension()
 
 bool VirtualDimension::Start(HINSTANCE hInstance, int nCmdShow)
 {
-   HWND hWnd;
-   RECT pos;
-   Settings settings;
-   HWND hwndPrev;
-   DWORD dwStyle;
+	HWND hWnd;
+	RECT pos;
+	Settings settings;
+	HWND hwndPrev;
+	DWORD dwStyle;
 
-   // If a previous instance is running, activate
-   // that instance and terminate this one.
-   hwndPrev = FindWindow();
-   if (hwndPrev != NULL)
-   {
-        SetForegroundWindow (hwndPrev);
-        return false;
-   }
+	// If a previous instance is running, activate
+	// that instance and terminate this one.
+	hwndPrev = FindWindow();
+	if (hwndPrev != NULL)
+	{
+		 SetForegroundWindow (hwndPrev);
+		 return false;
+	}
 
-   m_hInstance = hInstance;
+	m_hInstance = hInstance;
 
-   InitHotkeyControl();
-   InitHyperLinkControl();
+	InitHotkeyControl();
+	InitHyperLinkControl();
 
-   // Register the window class
-   RegisterClass();
+	// Register the window class
+	RegisterClass();
 
-   // Bind the message handlers
-   SetCommandHandler(IDM_ABOUT, this, &VirtualDimension::OnCmdAbout);
-   SetSysCommandHandler(IDM_ABOUT, this, &VirtualDimension::OnCmdAbout);
-   SetCommandHandler(IDM_CONFIGURE, this, &VirtualDimension::OnCmdConfigure);
-   SetSysCommandHandler(IDM_CONFIGURE, this, &VirtualDimension::OnCmdConfigure);
-   SetCommandHandler(IDM_EXIT, this, &VirtualDimension::OnCmdExit);
-   SetSysCommandHandler(SC_CLOSE, this, &VirtualDimension::OnCmdExit);
-   SetCommandHandler(IDM_LOCKPREVIEWWND, this, &VirtualDimension::OnCmdLockPreviewWindow);
-   SetSysCommandHandler(IDM_LOCKPREVIEWWND, this, &VirtualDimension::OnCmdLockPreviewWindow);
-   SetCommandHandler(IDM_SHOWCAPTION, this, &VirtualDimension::OnCmdShowCaption);
-   SetSysCommandHandler(IDM_SHOWCAPTION, this, &VirtualDimension::OnCmdShowCaption);
+	// Bind the message handlers
+	SetCommandHandler(IDM_ABOUT, this, &VirtualDimension::OnCmdAbout);
+	SetSysCommandHandler(IDM_ABOUT, this, &VirtualDimension::OnCmdAbout);
+	SetCommandHandler(IDM_CONFIGURE, this, &VirtualDimension::OnCmdConfigure);
+	SetSysCommandHandler(IDM_CONFIGURE, this, &VirtualDimension::OnCmdConfigure);
+	SetCommandHandler(IDM_EXIT, this, &VirtualDimension::OnCmdExit);
+	SetSysCommandHandler(SC_CLOSE, this, &VirtualDimension::OnCmdExit);
+	SetCommandHandler(IDM_LOCKPREVIEWWND, this, &VirtualDimension::OnCmdLockPreviewWindow);
+	SetSysCommandHandler(IDM_LOCKPREVIEWWND, this, &VirtualDimension::OnCmdLockPreviewWindow);
+	SetCommandHandler(IDM_SHOWCAPTION, this, &VirtualDimension::OnCmdShowCaption);
+	SetSysCommandHandler(IDM_SHOWCAPTION, this, &VirtualDimension::OnCmdShowCaption);
 
-   SetMessageHandler(WM_DESTROY, this, &VirtualDimension::OnDestroy);
+	SetMessageHandler(WM_DESTROY, this, &VirtualDimension::OnDestroy);
 	SetMessageHandler(WM_ENDSESSION, this, &VirtualDimension::OnEndSession);
-   SetMessageHandler(WM_MOVE, this, &VirtualDimension::OnMove);
-   SetMessageHandler(WM_WINDOWPOSCHANGING, this, &VirtualDimension::OnWindowPosChanging);
+	SetMessageHandler(WM_MOVE, this, &VirtualDimension::OnMove);
+	SetMessageHandler(WM_WINDOWPOSCHANGING, this, &VirtualDimension::OnWindowPosChanging);
 	SetMessageHandler(WM_DISPLAYCHANGE, this, &VirtualDimension::OnDisplayChange);
 	SetMessageHandler(WM_SHOWWINDOW, this, &VirtualDimension::OnShowWindow);
 
-   SetMessageHandler(WM_LBUTTONDOWN, this, &VirtualDimension::OnLeftButtonDown);
-   SetMessageHandler(WM_LBUTTONUP, this, &VirtualDimension::OnLeftButtonUp);
-   SetMessageHandler(WM_LBUTTONDBLCLK, this, &VirtualDimension::OnLeftButtonDblClk);
-   SetMessageHandler(WM_RBUTTONDOWN, this, &VirtualDimension::OnRightButtonDown);
+	SetMessageHandler(WM_LBUTTONDOWN, this, &VirtualDimension::OnLeftButtonDown);
+	SetMessageHandler(WM_LBUTTONUP, this, &VirtualDimension::OnLeftButtonUp);
+	SetMessageHandler(WM_LBUTTONDBLCLK, this, &VirtualDimension::OnLeftButtonDblClk);
+	SetMessageHandler(WM_RBUTTONDOWN, this, &VirtualDimension::OnRightButtonDown);
 
-   SetMessageHandler(WM_MEASUREITEM, this, &VirtualDimension::OnMeasureItem);
-   SetMessageHandler(WM_DRAWITEM, this, &VirtualDimension::OnDrawItem);
+	SetMessageHandler(WM_MEASUREITEM, this, &VirtualDimension::OnMeasureItem);
+	SetMessageHandler(WM_DRAWITEM, this, &VirtualDimension::OnDrawItem);
 
-   m_autoHideTimerId = CreateTimer(this, &VirtualDimension::OnTimer);
+	m_autoHideTimerId = CreateTimer(this, &VirtualDimension::OnTimer);
 	SetMessageHandler(WM_ACTIVATEAPP, this, &VirtualDimension::OnActivateApp);
 
-	SetMessageHandler(WM_MOUSEHOVER, this, &VirtualDimension::OnMouseHover);
+	//SetMessageHandler(WM_MOUSEHOVER, this, &VirtualDimension::OnMouseHover);
+	SetMessageHandler(WM_MOUSEMOVE, this, &VirtualDimension::OnMouseMove);
 	SetMessageHandler(WM_MOUSELEAVE, this, &VirtualDimension::OnMouseLeave);
-	SetMessageHandler(WM_NCHITTEST, this, &VirtualDimension::OnNCHitTest);
+	//SetMessageHandler(WM_NCHITTEST, this, &VirtualDimension::OnNCHitTest);
 
-   SetMessageHandler(WM_VD_HOOK_MENU_COMMAND, this, &VirtualDimension::OnHookMenuCommand);
-   SetMessageHandler(WM_VD_PREPARE_HOOK_MENU, this, &VirtualDimension::OnPrepareHookMenu);
-   SetMessageHandler(WM_VD_CHECK_MIN_TO_TRAY, this, &VirtualDimension::OnCheckMinToTray);
+	SetMessageHandler(WM_VD_HOOK_MENU_COMMAND, this, &VirtualDimension::OnHookMenuCommand);
+	SetMessageHandler(WM_VD_PREPARE_HOOK_MENU, this, &VirtualDimension::OnPrepareHookMenu);
+	SetMessageHandler(WM_VD_CHECK_MIN_TO_TRAY, this, &VirtualDimension::OnCheckMinToTray);
 
 	// compare the window's style
-   m_hasCaption = settings.LoadSetting(Settings::HasCaption);
-   dwStyle = WS_POPUP | WS_SYSMENU | (m_hasCaption ? WS_CAPTION : WS_DLGFRAME);
+	m_hasCaption = settings.LoadSetting(Settings::HasCaption);
+	dwStyle = WS_POPUP | WS_SYSMENU | (m_hasCaption ? WS_CAPTION : WS_DLGFRAME);
 
 	// Reload the window's position
-   settings.LoadSetting(Settings::WindowPosition, &pos);
-   AdjustWindowRectEx(&pos, dwStyle, FALSE, WS_EX_TOOLWINDOW);
+	settings.LoadSetting(Settings::WindowPosition, &pos);
+	AdjustWindowRectEx(&pos, dwStyle, FALSE, WS_EX_TOOLWINDOW);
 
 	// Dock the window to the screen borders
 	m_dockedBorders = settings.LoadSetting(Settings::DockedBorders);
@@ -180,16 +181,17 @@ bool VirtualDimension::Start(HINSTANCE hInstance, int nCmdShow)
 
 	// Create the main window
 	Create( WS_EX_TOOLWINDOW, m_szWindowClass, m_szTitle, dwStyle,
-           pos.left, pos.top, pos.right - pos.left, pos.bottom - pos.top,
-           NULL, NULL, hInstance);
-   if (!IsValid())
-      return false;
+			pos.left, pos.top, pos.right - pos.left, pos.bottom - pos.top,
+			NULL, NULL, hInstance);
+	if (!IsValid())
+	   return false;
 
-   hWnd = *this;
+	hWnd = *this;
 
 	// Load some settings
 	m_snapSize = settings.LoadSetting(Settings::SnapSize);
 	m_autoHideDelay = settings.LoadSetting(Settings::AutoHideDelay);
+	m_clickToUnhide = settings.LoadSetting(Settings::ClickToUnhide);
 	m_shrinked = false;
 
 	m_tracking = false;
@@ -197,90 +199,90 @@ bool VirtualDimension::Start(HINSTANCE hInstance, int nCmdShow)
 	//Ensure the window gets docked if it is close enough to the borders
 	SetWindowPos(hWnd, NULL, pos.left, pos.top, pos.right - pos.left, pos.bottom - pos.top, SWP_NOACTIVATE|SWP_NOZORDER|SWP_NOOWNERZORDER);
 
-   // Setup the system menu
-   m_pSysMenu = GetSystemMenu(hWnd, FALSE);
+	// Setup the system menu
+	m_pSysMenu = GetSystemMenu(hWnd, FALSE);
 	if (m_pSysMenu != NULL)
 	{
-      RemoveMenu(m_pSysMenu, SC_RESTORE, MF_BYCOMMAND);
-      RemoveMenu(m_pSysMenu, SC_MINIMIZE, MF_BYCOMMAND);
-      RemoveMenu(m_pSysMenu, SC_MAXIMIZE, MF_BYCOMMAND);
-      RemoveMenu(m_pSysMenu, SC_MOVE, MF_BYCOMMAND);
-      RemoveMenu(m_pSysMenu, SC_SIZE, MF_BYCOMMAND);
-      RemoveMenu(m_pSysMenu, 0, MF_BYCOMMAND);
+	   RemoveMenu(m_pSysMenu, SC_RESTORE, MF_BYCOMMAND);
+	   RemoveMenu(m_pSysMenu, SC_MINIMIZE, MF_BYCOMMAND);
+	   RemoveMenu(m_pSysMenu, SC_MAXIMIZE, MF_BYCOMMAND);
+	   RemoveMenu(m_pSysMenu, SC_MOVE, MF_BYCOMMAND);
+	   RemoveMenu(m_pSysMenu, SC_SIZE, MF_BYCOMMAND);
+	   RemoveMenu(m_pSysMenu, 0, MF_BYCOMMAND);
 
-      AppendMenu(m_pSysMenu, MF_SEPARATOR, 0, NULL);
-      AppendMenu(m_pSysMenu, MF_STRING, IDM_CONFIGURE, Locale::GetInstance().GetString(IDS_CONFIGURE)); //"C&onfigure"
-      AppendMenu(m_pSysMenu, MF_STRING, IDM_LOCKPREVIEWWND, Locale::GetInstance().GetString(IDS_LOCKPREVIEWWND)); //"&Lock the window"
-      AppendMenu(m_pSysMenu, MF_STRING, IDM_SHOWCAPTION, Locale::GetInstance().GetString(IDS_SHOWCAPTION)); //"S&how the caption"
+	   AppendMenu(m_pSysMenu, MF_SEPARATOR, 0, NULL);
+	   AppendMenu(m_pSysMenu, MF_STRING, IDM_CONFIGURE, Locale::GetInstance().GetString(IDS_CONFIGURE)); //"C&onfigure"
+	   AppendMenu(m_pSysMenu, MF_STRING, IDM_LOCKPREVIEWWND, Locale::GetInstance().GetString(IDS_LOCKPREVIEWWND)); //"&Lock the window"
+	   AppendMenu(m_pSysMenu, MF_STRING, IDM_SHOWCAPTION, Locale::GetInstance().GetString(IDS_SHOWCAPTION)); //"S&how the caption"
 
-      if (CreateLangMenu())
-         AppendMenu(m_pSysMenu, MF_STRING|MF_POPUP, (UINT_PTR)m_pLangMenu, Locale::GetInstance().GetString(IDS_LANGUAGEMENU)); //"L&anguage"
-      AppendMenu(m_pSysMenu, MF_STRING, IDM_ABOUT, Locale::GetInstance().GetString(IDS_ABOUT)); //"&About"
-      CheckMenuItem(m_pSysMenu, IDM_SHOWCAPTION, m_hasCaption ? MF_CHECKED : MF_UNCHECKED );
-   }
+	   if (CreateLangMenu())
+		  AppendMenu(m_pSysMenu, MF_STRING|MF_POPUP, (UINT_PTR)m_pLangMenu, Locale::GetInstance().GetString(IDS_LANGUAGEMENU)); //"L&anguage"
+	   AppendMenu(m_pSysMenu, MF_STRING, IDM_ABOUT, Locale::GetInstance().GetString(IDS_ABOUT)); //"&About"
+	   CheckMenuItem(m_pSysMenu, IDM_SHOWCAPTION, m_hasCaption ? MF_CHECKED : MF_UNCHECKED );
+	}
 
-   // Lock the preview window as appropriate
-   LockPreviewWindow(settings.LoadSetting(Settings::LockPreviewWindow));
+	// Lock the preview window as appropriate
+	LockPreviewWindow(settings.LoadSetting(Settings::LockPreviewWindow));
 
-   // Bind to explorer
-   explorerWrapper = new ExplorerWrapper(this);
+	// Bind to explorer
+	explorerWrapper = new ExplorerWrapper(this);
 
-   // Initialize the tray icon manager
-   trayManager = new TrayIconsManager();
+	// Initialize the tray icon manager
+	trayManager = new TrayIconsManager();
 
-   // Initialize tray icon
-   trayIcon = new TrayIcon(hWnd);
+	// Initialize tray icon
+	trayIcon = new TrayIcon(hWnd);
 
-   // Initialize transparency (set value two times, to make a fade-in)
-   transp = new Transparency(hWnd);
+	// Initialize transparency (set value two times, to make a fade-in)
+	transp = new Transparency(hWnd);
 	transp->SetTransparencyLevel(0);
-   transp->SetTransparencyLevel(settings.LoadSetting(Settings::TransparencyLevel), true);
+	transp->SetTransparencyLevel(settings.LoadSetting(Settings::TransparencyLevel), true);
 
-   // Initialize always on top state
-   ontop = new AlwaysOnTop(hWnd);
-   ontop->SetAlwaysOnTop(settings.LoadSetting(Settings::AlwaysOnTop));
+	// Initialize always on top state
+	ontop = new AlwaysOnTop(hWnd);
+	ontop->SetAlwaysOnTop(settings.LoadSetting(Settings::AlwaysOnTop));
 
-   // Create the tooltip
-   tooltip = new ToolTip(hWnd);
+	// Create the tooltip
+	tooltip = new ToolTip(hWnd);
 
-   // Create mouse warp
-   mousewarp = new MouseWarp();
+	// Create mouse warp
+	mousewarp = new MouseWarp();
 
-   // Create the windows manager
-   winMan = new WindowsManager;
+	// Create the windows manager
+	winMan = new WindowsManager;
 
-   // Create the desk manager
+	// Create the desk manager
 	settings.LoadSetting(Settings::WindowPosition, &pos);	//use client position
-   deskMan = new DesktopManager(pos.right - pos.left, pos.bottom - pos.top);
+	deskMan = new DesktopManager(pos.right - pos.left, pos.bottom - pos.top);
 
-   // Retrieve the initial list of windows
-   winMan->PopulateInitialWindowsSet();
+	// Retrieve the initial list of windows
+	winMan->PopulateInitialWindowsSet();
 
-   //Update tray icon tooltip
-   trayIcon->Update();
+	//Update tray icon tooltip
+	trayIcon->Update();
 
 	//Bind some additional message handlers (which need the desktop manager)
-   SetMessageHandler(WM_SIZE, this, &VirtualDimension::OnSize);
-   SetMessageHandler(WM_PAINT, deskMan, &DesktopManager::OnPaint);
+	SetMessageHandler(WM_SIZE, this, &VirtualDimension::OnSize);
+	SetMessageHandler(WM_PAINT, deskMan, &DesktopManager::OnPaint);
 
-   // Show window if needed
-   if (m_isWndVisible = (settings.LoadSetting(Settings::ShowWindow) || !trayIcon->HasIcon()))
-   {
-      ShowWindow(hWnd, nCmdShow);
-      Refresh();
-   }
+	// Show window if needed
+	if (m_isWndVisible = (settings.LoadSetting(Settings::ShowWindow) || !trayIcon->HasIcon()))
+	{
+	   ShowWindow(hWnd, nCmdShow);
+	   Refresh();
+	}
 
-   fullScreenView = new FullScreenView(deskMan);
-   if (!fullScreenView->Create(hWnd))
+	fullScreenView = new FullScreenView(deskMan);
+	if (!fullScreenView->Create(hWnd))
 	   return false;
 
-   winMan->OnWindowCreated(*fullScreenView);
-   Window* fsvWindow = winMan->GetWindow(*fullScreenView);
-   if (fsvWindow) {
+	winMan->OnWindowCreated(*fullScreenView);
+	Window* fsvWindow = winMan->GetWindow(*fullScreenView);
+	if (fsvWindow) {
 	   fsvWindow->SetOnAllDesktops(true);
-   }
+	}
 
-   return true;
+	return true;
 }
 
 VirtualDimension::~VirtualDimension()
@@ -394,6 +396,11 @@ LRESULT VirtualDimension::OnCmdExit(HWND hWnd, UINT /*message*/, WPARAM /*wParam
 
 LRESULT VirtualDimension::OnLeftButtonDown(HWND hWnd, UINT /*message*/, WPARAM /*wParam*/, LPARAM lParam)
 {
+   if (m_shrinked && m_clickToUnhide) {
+	   UnShrink();
+	   return 0;
+   }
+
    POINT pt;
    BOOL screenPos = FALSE;
 
@@ -586,6 +593,8 @@ LRESULT VirtualDimension::OnDestroy(HWND /*hWnd*/, UINT /*message*/, WPARAM /*wP
 
 	//Save the auto-hide delay
 	settings.SaveSetting(Settings::AutoHideDelay, m_autoHideDelay);
+
+	settings.SaveSetting(Settings::ClickToUnhide, m_clickToUnhide);
 
 	//Save the visibility state of the window before it is hidden
 	settings.SaveSetting(Settings::ShowWindow, m_isWndVisible);
@@ -859,7 +868,8 @@ LRESULT VirtualDimension::OnTimer(HWND /*hWnd*/, UINT /*message*/, WPARAM /*wPar
    if (!IsPointInWindow(pt) && GetWindowThreadProcessId(GetForegroundWindow(),NULL) != GetCurrentThreadId())
    {
       KillTimer(m_autoHideTimerId); //already auto-hidden -> do not need to
-	   Shrink();
+	  if (m_autoHideDelay > 0)
+		  Shrink();
    }
 
    return 0;
@@ -870,7 +880,7 @@ LRESULT VirtualDimension::OnActivateApp(HWND /*hWnd*/, UINT /*message*/, WPARAM 
 	if (wParam == TRUE)
       KillTimer(m_autoHideTimerId);                   //Kill auto-hide timer if activated
 	else if (m_autoHideDelay > 0 && ((DWORD)lParam != GetCurrentThreadId()))
-		SetTimer(m_autoHideTimerId, m_autoHideDelay);   //Re-start auto-hide timer if de-activated
+		SetTimer(m_autoHideTimerId, 1000*m_autoHideDelay);   //Re-start auto-hide timer if de-activated
 	return 0;
 }
 
@@ -898,46 +908,60 @@ LRESULT VirtualDimension::OnSize(HWND /*hWnd*/, UINT /*message*/, WPARAM wParam,
 	return 0;
 }
 
-LRESULT VirtualDimension::OnMouseHover(HWND /*hWnd*/, UINT /*message*/, WPARAM /*wParam*/, LPARAM /*lParam*/)
+LRESULT VirtualDimension::OnMouseMove(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	//Un-shrink the window
-	if (m_shrinked)
-		UnShrink();
-
-	m_tracking = false;
-	return 0;
+	if (m_shrinked) {
+		if (!m_clickToUnhide) {
+			UnShrink();
+			m_tracking = false;
+		}
+	}
+	else if (!m_tracking) {
+		//Setup mouse tracking
+		TRACKMOUSEEVENT tme;
+		tme.cbSize = sizeof(TRACKMOUSEEVENT);
+		tme.dwFlags = TME_LEAVE;
+		tme.dwHoverTime = HOVER_DEFAULT;
+		tme.hwndTrack = m_hWnd;
+		m_tracking = TrackMouseEvent(&tme) ? true : false;
+	}
+	
+	return DefWindowProc(hWnd, message, wParam, lParam);
 }
 
 LRESULT VirtualDimension::OnMouseLeave(HWND /*hWnd*/, UINT /*message*/, WPARAM /*wParam*/, LPARAM /*lParam*/)
 {
    //Set timer to auto-hide
-	if (!m_shrinked && m_autoHideDelay > 0)
-		SetTimer(m_autoHideTimerId, m_autoHideDelay);
+	if (!m_shrinked && m_autoHideDelay > 0) {
+		KillTimer(m_autoHideTimerId);
+		SetTimer(m_autoHideTimerId, 1000*m_autoHideDelay);
+	}
 
 	m_tracking = false;
 	return 0;
 }
 
-LRESULT VirtualDimension::OnNCHitTest(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
-{
-	//Stop auto-hide timer (re-entry in the window)
-	KillTimer(m_autoHideTimerId);
-
-	//Track mouse hover/leave, if not already doing so
-	if (!m_tracking)
-	{
-		//Setup mouse tracking
-		TRACKMOUSEEVENT tme;
-
-		tme.cbSize = sizeof(TRACKMOUSEEVENT);
-		tme.dwFlags = TME_HOVER | TME_LEAVE;
-		tme.dwHoverTime = 1000;
-		tme.hwndTrack = m_hWnd;
-		m_tracking = TrackMouseEvent(&tme) ? true : false;
-	}
-
-	return DefWindowProc(hWnd, message, wParam, lParam);
-}
+//LRESULT VirtualDimension::OnNCHitTest(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+//{
+//	//Stop auto-hide timer (re-entry in the window)
+//	KillTimer(m_autoHideTimerId);
+//
+//	//Track mouse hover/leave, if not already doing so
+//	if (!m_tracking)
+//	{
+//		//Setup mouse tracking
+//		TRACKMOUSEEVENT tme;
+//
+//		tme.cbSize = sizeof(TRACKMOUSEEVENT);
+//		tme.dwFlags = TME_HOVER | TME_LEAVE;
+//		tme.dwHoverTime = 1000;
+//		tme.hwndTrack = m_hWnd;
+//		m_tracking = TrackMouseEvent(&tme) ? true : false;
+//	}
+//
+//	return DefWindowProc(hWnd, message, wParam, lParam);
+//}
 
 LRESULT VirtualDimension::OnCmdLanguageChange(HWND /*hWnd*/, UINT /*message*/, WPARAM wParam, LPARAM /*lParam*/)
 {

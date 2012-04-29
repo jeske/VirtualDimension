@@ -199,12 +199,15 @@ LRESULT FullScreenView::OnPaint(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 	HDC hdc;
 
 	GetClientRect(hWnd, &rect);
+	
 	hdc = BeginPaint(hWnd, &ps);
 
 	HBRUSH br = CreateSolidBrush(0x00402020);
 	FillRect(hdc, &rect, br);
 	
 	EndPaint(hWnd, &ps);
+	
+	DeleteObject(br);
 	return 0;
 }
 

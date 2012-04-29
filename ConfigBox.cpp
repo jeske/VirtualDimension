@@ -101,6 +101,9 @@ LRESULT CALLBACK SettingsConfiguration(HWND hDlg, UINT message, WPARAM wParam, L
 
          //Setup mouse warp
          CheckDlgButton(hDlg, IDC_MOUSEWARP_CHECK, mousewarp->IsWarpEnabled() ? BST_CHECKED : BST_UNCHECKED);
+
+		 // Click to unhide option
+		 CheckDlgButton(hDlg, IDC_CLICKTOUNHIDE_CHECK, vdWindow.IsClickToUnhide() ? BST_CHECKED : BST_UNCHECKED);
       }
 		return TRUE;
 
@@ -182,6 +185,9 @@ LRESULT CALLBACK SettingsConfiguration(HWND hDlg, UINT message, WPARAM wParam, L
 
             //Apply succeeded
             SetWindowLong(pnmh->hwndFrom, DWL_MSGRESULT, PSNRET_NOERROR);
+
+			// Set click to unhide
+			vdWindow.SetClickToUnhide(IsDlgButtonChecked(hDlg, IDC_CLICKTOUNHIDE_CHECK) == BST_CHECKED);
          }
          return TRUE;
       }

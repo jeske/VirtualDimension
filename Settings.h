@@ -42,6 +42,7 @@ public:
    static DECLARE_SETTING(HasCaption, bool);
    static DECLARE_SETTING(SnapSize, int);
    static DECLARE_SETTING(AutoHideDelay, int);
+   static DECLARE_SETTING(ClickToUnhide, bool);
    static DECLARE_SETTING(EnableToolTips, bool);
    static DECLARE_SETTING(ConfirmKilling, bool);
    static DECLARE_SETTING(AutoSaveWindowSettings, bool);
