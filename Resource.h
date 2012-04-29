@@ -208,6 +208,8 @@
 #define IDC_WARPKEY_OTHER_RADIO			 1102
 #define IDC_CUSTOMKEY_EDIT				    1103
 #define IDC_CLICKTOUNHIDE_CHECK			 1104
+#define IDD_DESKTOPRENAME				 1105
+#define IDC_EDIT_DESKTOPRENAME			 1106
 
 #define IDC_STATIC                      -1
 

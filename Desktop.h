@@ -93,6 +93,8 @@ protected:
    static void ShowWindowWorkerProc(LPVOID lpParam);
    static void HideWindowWorkerProc(LPVOID lpParam);
 
+   void InsertDesktopRenameItem(HMENU hmenu);
+
    bool m_active;
 
    int m_index;

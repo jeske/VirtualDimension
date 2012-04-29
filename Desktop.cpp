@@ -30,6 +30,7 @@
 #include "PlatformHelper.h"
 #include "Locale.h"
 #include "Capture.h"
+#include "DesktopRenameWnd.h"
 
 Desktop::Desktop(int i)
 	: m_picture(0)
@@ -133,13 +134,42 @@ HMENU Desktop::BuildMenu()
       InsertMenuItem(hMenu, (UINT)-1, TRUE, &mii);
    }
 
+   InsertDesktopRenameItem(hMenu);
+   
    return hMenu;
+}
+
+static const UINT DESKTOP_RENAME_ID = WM_USER+1;
+
+void Desktop::InsertDesktopRenameItem(HMENU hMenu)
+{
+	MENUITEMINFO mii;
+	memset(&mii, 0, sizeof(mii));
+	mii.cbSize = sizeof(mii);
+	mii.fMask = MIIM_STRING | MIIM_STATE | MIIM_ID;
+	mii.fType = MFT_STRING;
+	mii.fState = MFS_HILITE;
+	mii.wID = DESKTOP_RENAME_ID;
+	mii.dwTypeData = m_name;
+	mii.cch = strlen(m_name);
+	InsertMenuItem(hMenu, 0, TRUE, &mii);
 }
 
 void Desktop::OnMenuItemSelected(HMENU /*menu*/, int cmdId)
 {
+   if (cmdId == DESKTOP_RENAME_ID)
+   {
+	   DesktopRenameWnd wnd;
+	   TCHAR newName[80];
+	   strcpy(newName, m_name);
+	   if (wnd.DoModal(vdWindow, newName))
+	   {
+		   Rename(newName);
+	   }
+	   return;
+   }
+	
    Window * win;
-
    win = (Window *)(cmdId-WM_USER);
    win->Activate();
 }
@@ -285,6 +315,8 @@ void Desktop::Rename(char * name)
 
    /* copy the new name */
    strncpy(m_name, name, sizeof(m_name));
+
+   InvalidateRect(vdWindow, 0, FALSE);
 }
 
 void Desktop::Remove()

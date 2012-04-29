@@ -89,6 +89,7 @@
     <ClCompile Include="deskPropsDlg.cpp" />
     <ClCompile Include="Desktop.cpp" />
     <ClCompile Include="DesktopManager.cpp" />
+    <ClCompile Include="DesktopRenameWnd.cpp" />
     <ClCompile Include="ExplorerWrapper.cpp" />
     <ClCompile Include="FastWindow.cpp" />
     <ClCompile Include="FullScreenView.cpp" />
@@ -140,6 +141,7 @@
     <ClInclude Include="Config.h" />
     <ClInclude Include="Desktop.h" />
     <ClInclude Include="DesktopManager.h" />
+    <ClInclude Include="DesktopRenameWnd.h" />
     <ClInclude Include="ExplorerWrapper.h" />
     <ClInclude Include="FastWindow.h" />
     <ClInclude Include="FullScreenView.h" />
